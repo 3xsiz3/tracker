@@ -2,16 +2,24 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
 import { TaskCard } from '@/components/TaskCard'
 import { NewTaskDialog } from '@/components/NewTaskDialog'
 import { initials } from '@/lib/selectors'
+import { competencyStyle } from '@/lib/colors'
+import { competencySkills } from '@/lib/skills'
 
 export function EmployeeDetailPage() {
   const { employeeId } = useParams<{ employeeId: string }>()
   const currentUserId = useAppStore((s) => s.currentUserId)!
   const users = useAppStore((s) => s.users)
   const allTasks = useAppStore((s) => s.tasks)
+  const allAssessments = useAppStore((s) => s.assessments)
   const tasks = allTasks.filter((t) => t.assigneeId === employeeId)
+  const skills = competencySkills(
+    tasks,
+    allAssessments.filter((a) => tasks.some((t) => t.id === a.taskId)),
+  ).sort((a, b) => b.taskCount - a.taskCount)
 
   const employee = users.find((u) => u.id === employeeId)
 
@@ -39,6 +47,27 @@ export function EmployeeDetailPage() {
         </div>
         <NewTaskDialog assigneeId={employee.id} createdById={currentUserId} />
       </div>
+
+      {skills.length > 0 && (
+        <div className="mb-6 rounded-xl border p-4">
+          <h2 className="mb-3 text-sm font-medium">Навыки</h2>
+          <div className="space-y-2">
+            {skills.map((skill) => {
+              const style = competencyStyle(skill.competency)
+              return (
+                <div key={skill.competency} className="flex items-center justify-between gap-2">
+                  <Badge variant="outline" className={`${style.text} border-current`}>
+                    {skill.competency}
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {skill.overall} / 5 · {skill.taskCount} {skill.taskCount === 1 ? 'задача' : 'задачи'}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">Пока нет задач. Создайте первую задачу развития.</p>

@@ -5,11 +5,11 @@ export function taskProgress(task: Pick<DevelopmentTask, 'checklist'>): number {
   return task.checklist.filter((item) => item.done).reduce((sum, item) => sum + item.weight, 0)
 }
 
-export function taskStatus(task: Pick<DevelopmentTask, 'checklist'>): TaskStatus {
+export function taskStatus(task: Pick<DevelopmentTask, 'checklist' | 'confirmedAt'>): TaskStatus {
   const progress = taskProgress(task)
   if (progress <= 0) return 'not_started'
-  if (progress >= 100) return 'completed'
-  return 'in_progress'
+  if (progress < 100) return 'in_progress'
+  return task.confirmedAt ? 'completed' : 'pending_review'
 }
 
 export function checklistWeightSum(items: { weight: number }[]): number {

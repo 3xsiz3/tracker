@@ -1,8 +1,9 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { ChecklistItem, ChecklistOwner, Comment, DevelopmentTask, User } from '@/types'
-import { seedComments, seedTasks, seedUsers } from '@/store/seed'
+import type { Assessment, AssessmentCriteria, ChecklistItem, ChecklistOwner, Comment, DevelopmentTask, User } from '@/types'
+import { seedAssessments, seedComments, seedTasks, seedUsers } from '@/store/seed'
 import { taskProgress, taskStatus } from '@/lib/task'
+import { avatarColorForIndex } from '@/lib/colors'
 
 function historyEntry(checklist: ChecklistItem[]) {
   const progress = taskProgress({ checklist })
@@ -13,6 +14,7 @@ interface AppState {
   users: User[]
   tasks: DevelopmentTask[]
   comments: Comment[]
+  assessments: Assessment[]
   currentUserId: string | null
 
   login: (userId: string) => void
@@ -30,6 +32,9 @@ interface AppState {
   setChecklist: (taskId: string, items: ChecklistItem[]) => void
   toggleChecklistItem: (taskId: string, itemId: string) => void
   addComment: (taskId: string, authorId: string, text: string) => void
+  submitAssessment: (taskId: string, assessedById: string, criteria: AssessmentCriteria) => void
+  confirmTask: (taskId: string, confirmedById: string) => void
+  addEmployee: (input: { name: string; managerId: string }) => void
 }
 
 export const useAppStore = create<AppState>()(
@@ -38,6 +43,7 @@ export const useAppStore = create<AppState>()(
       users: seedUsers,
       tasks: seedTasks,
       comments: seedComments,
+      assessments: seedAssessments,
       currentUserId: null,
 
       login: (userId) => set({ currentUserId: userId }),
@@ -67,7 +73,13 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           tasks: state.tasks.map((task) =>
             task.id === taskId
-              ? { ...task, checklist: items, history: [...task.history, historyEntry(items)] }
+              ? {
+                  ...task,
+                  checklist: items,
+                  confirmedAt: undefined,
+                  confirmedById: undefined,
+                  history: [...task.history, historyEntry(items)],
+                }
               : task,
           ),
         })),
@@ -77,7 +89,13 @@ export const useAppStore = create<AppState>()(
           tasks: state.tasks.map((task) => {
             if (task.id !== taskId) return task
             const checklist = task.checklist.map((it) => (it.id === itemId ? { ...it, done: !it.done } : it))
-            return { ...task, checklist, history: [...task.history, historyEntry(checklist)] }
+            return {
+              ...task,
+              checklist,
+              confirmedAt: undefined,
+              confirmedById: undefined,
+              history: [...task.history, historyEntry(checklist)],
+            }
           }),
         })),
 
@@ -91,6 +109,42 @@ export const useAppStore = create<AppState>()(
               authorId,
               text,
               createdAt: new Date().toISOString(),
+            },
+          ],
+        })),
+
+      submitAssessment: (taskId, assessedById, criteria) =>
+        set((state) => ({
+          assessments: [
+            ...state.assessments.filter((a) => a.taskId !== taskId),
+            { taskId, assessedById, assessedAt: new Date().toISOString(), ...criteria },
+          ],
+        })),
+
+      confirmTask: (taskId, confirmedById) =>
+        set((state) => ({
+          tasks: state.tasks.map((task) => {
+            if (task.id !== taskId) return task
+            const confirmedAt = new Date().toISOString()
+            return {
+              ...task,
+              confirmedAt,
+              confirmedById,
+              history: [...task.history, { at: confirmedAt, status: 'completed', progress: 100 }],
+            }
+          }),
+        })),
+
+      addEmployee: (input) =>
+        set((state) => ({
+          users: [
+            ...state.users,
+            {
+              id: crypto.randomUUID(),
+              name: input.name,
+              role: 'employee',
+              managerId: input.managerId,
+              avatarColor: avatarColorForIndex(state.users.length),
             },
           ],
         })),

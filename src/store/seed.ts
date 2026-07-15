@@ -1,4 +1,4 @@
-import type { Comment, DevelopmentTask, User } from '@/types'
+import type { Assessment, Comment, DevelopmentTask, User } from '@/types'
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString()
 const daysFromNow = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString()
@@ -76,6 +76,8 @@ export const seedTasks: DevelopmentTask[] = [
       { at: daysAgo(20), status: 'in_progress', progress: 40 },
       { at: daysAgo(5), status: 'completed', progress: 100 },
     ],
+    confirmedAt: daysAgo(5),
+    confirmedById: 'm1',
   },
   {
     id: 't4',
@@ -179,5 +181,16 @@ export const seedComments: Comment[] = [
     authorId: 'm1',
     text: 'Отличная работа на ролевой игре, видно уверенность в диалогах.',
     createdAt: daysAgo(4),
+  },
+]
+
+export const seedAssessments: Assessment[] = [
+  {
+    taskId: 't3',
+    assessedById: 'm1',
+    assessedAt: daysAgo(4),
+    quality: 5,
+    timeliness: 4,
+    autonomy: 4,
   },
 ]

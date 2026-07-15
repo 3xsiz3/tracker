@@ -1,5 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutGrid, ListChecks, LogOut, Sparkles, Users } from 'lucide-react'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { BarChart3, LayoutGrid, ListChecks, LogOut, Sparkles, Users } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -8,6 +8,7 @@ import { initials } from '@/lib/selectors'
 
 export function Sidebar() {
   const navigate = useNavigate()
+  const location = useLocation()
   const currentUserId = useAppStore((s) => s.currentUserId)
   const users = useAppStore((s) => s.users)
   const logout = useAppStore((s) => s.logout)
@@ -17,8 +18,21 @@ export function Sidebar() {
 
   const navItems =
     currentUser.role === 'manager'
-      ? [{ to: '/manager', label: 'Команда', icon: Users }]
-      : [{ to: '/employee', label: 'Мои задачи', icon: ListChecks }]
+      ? [
+          {
+            to: '/manager',
+            label: 'Команда',
+            icon: Users,
+            isActive: location.pathname === '/manager' || location.pathname.startsWith('/manager/employees'),
+          },
+          {
+            to: '/manager/reports',
+            label: 'Отчётность',
+            icon: BarChart3,
+            isActive: location.pathname.startsWith('/manager/reports'),
+          },
+        ]
+      : [{ to: '/employee', label: 'Мои задачи', icon: ListChecks, isActive: location.pathname.startsWith('/employee') }]
 
   return (
     <aside className="flex h-svh w-64 shrink-0 flex-col border-r bg-muted/20">
@@ -41,15 +55,13 @@ export function Sidebar() {
         >
           <LayoutGrid className="h-4 w-4" /> Обзор
         </NavLink>
-        {navItems.map(({ to, label, icon: Icon }) => (
+        {navItems.map(({ to, label, icon: Icon, isActive }) => (
           <NavLink
             key={to}
             to={to}
-            className={({ isActive }) =>
-              `flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
-              }`
-            }
+            className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              isActive ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+            }`}
           >
             <Icon className="h-4 w-4" /> {label}
           </NavLink>

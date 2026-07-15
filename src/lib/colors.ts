@@ -18,5 +18,21 @@ export function competencyStyle(competency: string) {
 export const STATUS_PILL: Record<TaskStatus, { className: string }> = {
   not_started: { className: 'bg-muted text-muted-foreground' },
   in_progress: { className: 'bg-blue-500/10 text-blue-700 dark:text-blue-400' },
+  pending_review: { className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400' },
   completed: { className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
+}
+
+const AVATAR_COLORS = [
+  'bg-violet-500',
+  'bg-blue-500',
+  'bg-emerald-500',
+  'bg-amber-500',
+  'bg-rose-500',
+  'bg-cyan-500',
+  'bg-fuchsia-500',
+  'bg-indigo-500',
+]
+
+export function avatarColorForIndex(i: number) {
+  return AVATAR_COLORS[i % AVATAR_COLORS.length]
 }

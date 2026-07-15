@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { NewTaskDialog } from '@/components/NewTaskDialog'
+import { AddEmployeeDialog } from '@/components/AddEmployeeDialog'
 import { StatTile } from '@/components/StatTile'
 import { initials } from '@/lib/selectors'
 import { taskProgress, taskStatus } from '@/lib/task'
@@ -24,9 +25,12 @@ export function ManagerDashboard() {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Моя команда</h1>
-        <p className="text-sm text-muted-foreground">Задачи развития и прогресс ваших сотрудников</p>
+      <div className="mb-6 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Моя команда</h1>
+          <p className="text-sm text-muted-foreground">Задачи развития и прогресс ваших сотрудников</p>
+        </div>
+        <AddEmployeeDialog managerId={currentUserId} />
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">

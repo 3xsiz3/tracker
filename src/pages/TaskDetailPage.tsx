@@ -3,9 +3,11 @@ import { format } from 'date-fns'
 import { ArrowLeft } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { ChecklistView } from '@/components/ChecklistView'
+import { AssessmentPanel } from '@/components/AssessmentPanel'
 import { CommentThread } from '@/components/CommentThread'
 import { STATUS_LABELS } from '@/types'
 import { taskProgress, taskStatus } from '@/lib/task'
@@ -14,6 +16,7 @@ import { userLabel } from '@/lib/selectors'
 const statusVariant = {
   not_started: 'outline',
   in_progress: 'default',
+  pending_review: 'default',
   completed: 'secondary',
 } as const
 
@@ -22,6 +25,7 @@ export function TaskDetailPage() {
   const currentUserId = useAppStore((s) => s.currentUserId)!
   const users = useAppStore((s) => s.users)
   const task = useAppStore((s) => s.tasks.find((t) => t.id === taskId))
+  const confirmTask = useAppStore((s) => s.confirmTask)
 
   if (!task) return <Navigate to="/" replace />
 
@@ -68,6 +72,21 @@ export function TaskDetailPage() {
           </div>
           <Progress value={progress} className="h-2" />
 
+          {status === 'pending_review' && (
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-900 dark:bg-amber-950/30">
+              <p className="text-sm text-amber-800 dark:text-amber-400">
+                {isCreator
+                  ? 'Все условия выполнены — подтвердите завершение задачи.'
+                  : 'Задача выполнена и ожидает подтверждения руководителя.'}
+              </p>
+              {isCreator && (
+                <Button size="sm" onClick={() => confirmTask(task.id, currentUserId)}>
+                  Принять
+                </Button>
+              )}
+            </div>
+          )}
+
           <div className="pt-1">
             <ChecklistView task={task} currentUserId={currentUserId} />
           </div>
@@ -89,6 +108,8 @@ export function TaskDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <AssessmentPanel task={task} currentUserId={currentUserId} />
 
       <div>
         <h2 className="mb-3 text-sm font-medium">Комментарии</h2>

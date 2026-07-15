@@ -8,7 +8,7 @@ export interface User {
   avatarColor: string
 }
 
-export type TaskStatus = 'not_started' | 'in_progress' | 'completed'
+export type TaskStatus = 'not_started' | 'in_progress' | 'pending_review' | 'completed'
 
 export interface ProgressEntry {
   at: string
@@ -37,6 +37,8 @@ export interface DevelopmentTask {
   dueDate?: string
   createdAt: string
   history: ProgressEntry[]
+  confirmedAt?: string
+  confirmedById?: string
 }
 
 export interface Comment {
@@ -47,8 +49,27 @@ export interface Comment {
   createdAt: string
 }
 
+export interface AssessmentCriteria {
+  quality: number
+  timeliness: number
+  autonomy: number
+}
+
+export interface Assessment extends AssessmentCriteria {
+  taskId: string
+  assessedById: string
+  assessedAt: string
+}
+
+export const ASSESSMENT_CRITERIA_LABELS: Record<keyof AssessmentCriteria, string> = {
+  quality: 'Качество результата',
+  timeliness: 'Соблюдение сроков',
+  autonomy: 'Самостоятельность',
+}
+
 export const STATUS_LABELS: Record<TaskStatus, string> = {
   not_started: 'Не начато',
   in_progress: 'В процессе',
+  pending_review: 'На проверке',
   completed: 'Завершено',
 }
