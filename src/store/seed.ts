@@ -42,6 +42,7 @@ export const seedTasks: DevelopmentTask[] = [
       { at: daysAgo(7), status: 'in_progress', progress: 20 },
       { at: daysAgo(2), status: 'in_progress', progress: 60 },
     ],
+    verificationQuestions: [],
   },
   {
     id: 't2',
@@ -55,6 +56,7 @@ export const seedTasks: DevelopmentTask[] = [
     dueDate: daysFromNow(21),
     createdAt: daysAgo(3),
     history: [{ at: daysAgo(3), status: 'not_started', progress: 0 }],
+    verificationQuestions: [],
   },
   {
     id: 't3',
@@ -78,6 +80,7 @@ export const seedTasks: DevelopmentTask[] = [
     ],
     confirmedAt: daysAgo(5),
     confirmedById: 'm1',
+    verificationQuestions: [],
   },
   {
     id: 't4',
@@ -99,6 +102,7 @@ export const seedTasks: DevelopmentTask[] = [
       { at: daysAgo(10), status: 'not_started', progress: 0 },
       { at: daysAgo(4), status: 'in_progress', progress: 25 },
     ],
+    verificationQuestions: [],
   },
   {
     id: 't5',
@@ -118,6 +122,7 @@ export const seedTasks: DevelopmentTask[] = [
       { at: daysAgo(8), status: 'not_started', progress: 0 },
       { at: daysAgo(2), status: 'in_progress', progress: 45 },
     ],
+    verificationQuestions: [],
   },
   {
     id: 't6',
@@ -136,6 +141,7 @@ export const seedTasks: DevelopmentTask[] = [
     dueDate: daysFromNow(40),
     createdAt: daysAgo(1),
     history: [{ at: daysAgo(1), status: 'not_started', progress: 0 }],
+    verificationQuestions: [],
   },
   {
     id: 't7',
@@ -157,6 +163,7 @@ export const seedTasks: DevelopmentTask[] = [
       { at: daysAgo(6), status: 'not_started', progress: 0 },
       { at: daysAgo(2), status: 'in_progress', progress: 50 },
     ],
+    verificationQuestions: [],
   },
 ]
 

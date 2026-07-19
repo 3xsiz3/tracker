@@ -1,4 +1,5 @@
 import { startOfWeek, subWeeks, format } from 'date-fns'
+import { ru } from 'date-fns/locale'
 import type { Assessment, DevelopmentTask, User } from '@/types'
 import { taskStatus } from '@/lib/task'
 import { assessmentOverall } from '@/lib/skills'
@@ -18,7 +19,7 @@ export function weeklyCompletions(tasks: DevelopmentTask[], weeks = 8): WeekBuck
   const buckets: WeekBucket[] = []
   for (let i = weeks - 1; i >= 0; i--) {
     const weekStart = startOfWeek(subWeeks(now, i), { weekStartsOn: 1 })
-    buckets.push({ weekStart: weekStart.toISOString(), label: format(weekStart, 'd MMM'), count: 0 })
+    buckets.push({ weekStart: weekStart.toISOString(), label: format(weekStart, 'd MMM', { locale: ru }), count: 0 })
   }
 
   for (const task of tasks) {

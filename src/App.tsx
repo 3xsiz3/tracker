@@ -20,6 +20,7 @@ function App() {
           <Route path="/manager/employees/:employeeId" element={<EmployeeDetailPage />} />
           <Route path="/employee" element={<EmployeeDashboard />} />
           <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
+          <Route path="*" element={<HomeRedirect />} />
         </Route>
       </Routes>
     </BrowserRouter>

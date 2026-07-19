@@ -1,18 +1,21 @@
 import { Link } from 'react-router-dom'
-import { CalendarDays, ListChecks } from 'lucide-react'
+import { AlertTriangle, CalendarDays, ListChecks } from 'lucide-react'
 import { format } from 'date-fns'
+import { ru } from 'date-fns/locale'
 import type { DevelopmentTask } from '@/types'
 import { STATUS_LABELS } from '@/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { taskProgress, taskStatus } from '@/lib/task'
 import { competencyStyle, STATUS_PILL } from '@/lib/colors'
+import { isOverdue } from '@/lib/reports'
 
 export function TaskCard({ task }: { task: DevelopmentTask }) {
   const progress = taskProgress(task)
   const status = taskStatus(task)
   const style = competencyStyle(task.competency)
   const doneCount = task.checklist.filter((i) => i.done).length
+  const overdue = isOverdue(task)
 
   return (
     <Link to={`/tasks/${task.id}`}>
@@ -39,9 +42,9 @@ export function TaskCard({ task }: { task: DevelopmentTask }) {
               )}
             </span>
             {task.dueDate && (
-              <span className="flex items-center gap-1">
-                <CalendarDays className="h-3.5 w-3.5" />
-                {format(new Date(task.dueDate), 'd MMM yyyy')}
+              <span className={`flex items-center gap-1 ${overdue ? 'font-medium text-rose-600' : ''}`}>
+                {overdue ? <AlertTriangle className="h-3.5 w-3.5" /> : <CalendarDays className="h-3.5 w-3.5" />}
+                {format(new Date(task.dueDate), 'd MMM yyyy', { locale: ru })}
               </span>
             )}
           </div>

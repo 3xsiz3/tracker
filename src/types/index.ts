@@ -39,6 +39,20 @@ export interface DevelopmentTask {
   history: ProgressEntry[]
   confirmedAt?: string
   confirmedById?: string
+  verificationQuestions: VerificationQuestion[]
+}
+
+export type QuestionType = 'open' | 'choice'
+
+export interface VerificationQuestion {
+  id: string
+  text: string
+  type: QuestionType
+  options?: string[]
+  correctOptionIndex?: number
+  answerText?: string
+  selectedOptionIndex?: number
+  answeredAt?: string
 }
 
 export interface Comment {

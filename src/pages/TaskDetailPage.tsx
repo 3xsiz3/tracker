@@ -1,12 +1,15 @@
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { format } from 'date-fns'
-import { ArrowLeft } from 'lucide-react'
+import { ru } from 'date-fns/locale'
+import { ArrowLeft, Trash2 } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { ChecklistView } from '@/components/ChecklistView'
+import { VerificationPanel } from '@/components/VerificationPanel'
 import { AssessmentPanel } from '@/components/AssessmentPanel'
 import { CommentThread } from '@/components/CommentThread'
 import { STATUS_LABELS } from '@/types'
@@ -22,12 +25,16 @@ const statusVariant = {
 
 export function TaskDetailPage() {
   const { taskId } = useParams<{ taskId: string }>()
+  const navigate = useNavigate()
   const currentUserId = useAppStore((s) => s.currentUserId)!
   const users = useAppStore((s) => s.users)
   const task = useAppStore((s) => s.tasks.find((t) => t.id === taskId))
   const confirmTask = useAppStore((s) => s.confirmTask)
+  const deleteTask = useAppStore((s) => s.deleteTask)
+  const [confirmingDelete, setConfirmingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
-  if (!task) return <Navigate to="/" replace />
+  if (!task) return deleting ? null : <Navigate to="/" replace />
 
   const isAssignee = task.assigneeId === currentUserId
   const isCreator = task.createdById === currentUserId
@@ -39,6 +46,9 @@ export function TaskDetailPage() {
   const status = taskStatus(task)
   const backHref = isCreator ? `/manager/employees/${task.assigneeId}` : '/employee'
   const history = [...task.history].sort((a, b) => b.at.localeCompare(a.at))
+  const unansweredQuestions = task.verificationQuestions.filter((q) =>
+    q.type === 'open' ? !q.answerText?.trim() : q.selectedOptionIndex === undefined,
+  )
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -48,11 +58,43 @@ export function TaskDetailPage() {
 
       <div className="mb-1 flex items-start justify-between gap-2">
         <h1 className="text-xl font-semibold tracking-tight">{task.title}</h1>
-        <Badge variant="outline">{task.competency}</Badge>
+        <div className="flex shrink-0 items-center gap-2">
+          <Badge variant="outline">{task.competency}</Badge>
+          {isCreator &&
+            (confirmingDelete ? (
+              <span className="flex items-center gap-1">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={() => {
+                    setDeleting(true)
+                    deleteTask(task.id)
+                    navigate(backHref)
+                  }}
+                >
+                  Да, удалить
+                </Button>
+                <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => setConfirmingDelete(false)}>
+                  Отмена
+                </Button>
+              </span>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={() => setConfirmingDelete(true)}
+                aria-label="Удалить задачу"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            ))}
+        </div>
       </div>
       <p className="mb-4 text-sm text-muted-foreground">
         Сотрудник: {userLabel(users, task.assigneeId)} · Поставил: {userLabel(users, task.createdById)}
-        {task.dueDate && <> · срок до {format(new Date(task.dueDate), 'd MMM yyyy')}</>}
+        {task.dueDate && <> · срок до {format(new Date(task.dueDate), 'd MMM yyyy', { locale: ru })}</>}
       </p>
 
       <Card className="mb-6">
@@ -76,11 +118,15 @@ export function TaskDetailPage() {
             <div className="flex items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-900 dark:bg-amber-950/30">
               <p className="text-sm text-amber-800 dark:text-amber-400">
                 {isCreator
-                  ? 'Все условия выполнены — подтвердите завершение задачи.'
-                  : 'Задача выполнена и ожидает подтверждения руководителя.'}
+                  ? unansweredQuestions.length > 0
+                    ? `Дождитесь ответов на проверочные вопросы (осталось ${unansweredQuestions.length}).`
+                    : 'Все условия выполнены — подтвердите завершение задачи.'
+                  : unansweredQuestions.length > 0
+                    ? 'Сначала ответьте на проверочные вопросы ниже, затем дождитесь подтверждения руководителя.'
+                    : 'Задача выполнена и ожидает подтверждения руководителя.'}
               </p>
               {isCreator && (
-                <Button size="sm" onClick={() => confirmTask(task.id, currentUserId)}>
+                <Button size="sm" disabled={unansweredQuestions.length > 0} onClick={() => confirmTask(task.id, currentUserId)}>
                   Принять
                 </Button>
               )}
@@ -100,7 +146,7 @@ export function TaskDetailPage() {
                     <span>
                       {STATUS_LABELS[entry.status]} · {entry.progress}%
                     </span>
-                    <span>{format(new Date(entry.at), 'd MMM yyyy, HH:mm')}</span>
+                    <span>{format(new Date(entry.at), 'd MMM yyyy, HH:mm', { locale: ru })}</span>
                   </li>
                 ))}
               </ul>
@@ -108,6 +154,8 @@ export function TaskDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      <VerificationPanel task={task} currentUserId={currentUserId} />
 
       <AssessmentPanel task={task} currentUserId={currentUserId} />
 

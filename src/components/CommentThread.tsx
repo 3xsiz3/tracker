@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
+import { ru } from 'date-fns/locale'
 import { useAppStore } from '@/store/useAppStore'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -36,7 +37,7 @@ export function CommentThread({ taskId, currentUserId }: { taskId: string; curre
             <div className="flex-1 rounded-lg bg-muted px-3 py-2">
               <div className="flex items-baseline justify-between gap-2">
                 <span className="text-sm font-medium">{author?.name ?? 'Неизвестный'}</span>
-                <span className="text-xs text-muted-foreground">{format(new Date(comment.createdAt), 'd MMM, HH:mm')}</span>
+                <span className="text-xs text-muted-foreground">{format(new Date(comment.createdAt), 'd MMM, HH:mm', { locale: ru })}</span>
               </div>
               <p className="mt-1 text-sm">{comment.text}</p>
             </div>

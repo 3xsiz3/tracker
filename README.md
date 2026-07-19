@@ -1,32 +1,86 @@
-# React + TypeScript + Vite
+# Трекер развития навыков
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Веб-приложение для постановки и отслеживания задач развития сотрудников. Руководитель ставит
+задачи на развитие конкретных компетенций, сотрудник отчитывается о прогрессе, а по завершении
+проходит проверку и получает оценку — из оценок складывается профиль навыков сотрудника и
+аналитика по команде.
 
-Currently, two official plugins are available:
+## Возможности
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Руководитель**
+- Добавление сотрудников в команду
+- Постановка задач развития с привязкой к компетенции, сроком и чеклистом условий выполнения
+  (разбивку делает сам или делегирует сотруднику)
+- Проверочные вопросы к задаче: открытый вопрос или мини-тест с вариантами ответа —
+  сотрудник обязан ответить до принятия задачи
+- Подтверждение выполнения («На проверке» → «Принять») и многокритериальная оценка
+  (качество, сроки, самостоятельность, 1–5)
+- Дашборд «Команда»: сводка, задачи требующие внимания (на проверке / просроченные),
+  карточки сотрудников с оценками и активностью
+- «Отчётность»: завершения по неделям, средние оценки по компетенциям, сводная таблица
+  по сотрудникам
+- Удаление задач
 
-## React Compiler
+**Сотрудник**
+- Список своих задач с фильтрами по статусу
+- Отметка выполнения условий чеклиста (прогресс считается по весам пунктов)
+- Ответы на проверочные вопросы руководителя
+- Личная сводка: статусы задач, средняя оценка, профиль навыков по компетенциям
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+**Общее**
+- Комментарии к задачам, история изменений прогресса
+- Статусы: Не начато → В процессе → На проверке → Завершено (после подтверждения руководителем)
 
-## Expanding the Oxlint configuration
+## Стек
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+React 19 · TypeScript · Vite · React Router 7 · Zustand (persist → localStorage) ·
+Tailwind CSS 4 · shadcn/ui (radix-ui) · date-fns · lucide-react
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Бэкенда нет: данные живут в localStorage браузера, стартовое состояние — сид-данные
+(`src/store/seed.ts`).
+
+## Запуск
+
+```bash
+npm install
+npm run dev       # http://localhost:5173
+npm run build     # прод-сборка (tsc + vite build)
+npm run lint      # oxlint
+npm run test:e2e  # сквозной e2e-тест (Playwright, нужен запущенный dev-сервер)
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Для e2e-теста один раз установите браузер: `npx playwright install chromium`.
+Тест проходит полный сценарий за обе роли (создание сотрудника и задачи, чеклист,
+проверочные вопросы, принятие, оценка, отчёты, удаление) и складывает скриншоты
+в `tests/screenshots/`.
+
+## Демо-аккаунты
+
+Вход — выбором пользователя на странице логина (без паролей):
+
+| Роль | Имя |
+|---|---|
+| Руководитель | Анна Соколова (команда из 3 человек, есть данные) |
+| Руководитель | Сергей Иванов |
+| Сотрудник | Артем Фатеев, Мария Кузнецова, Дмитрий Волков, Ольга Смирнова, Павел Новиков |
+
+## Структура
+
+```
+src/
+  pages/       — страницы (логин, дашборды ролей, сотрудник, задача, отчётность)
+  components/  — компоненты (чеклист, вопросы, оценка, комментарии, диалоги, чарты)
+  store/       — Zustand-стор (useAppStore) и сид-данные
+  lib/         — доменная логика: прогресс/статусы задач, агрегация навыков и отчётов, цвета
+  types/       — модель данных
+```
+
+## Модель данных
+
+- **DevelopmentTask** — задача: компетенция, исполнитель, чеклист с весами (сумма 100%),
+  срок, история прогресса, проверочные вопросы, отметка подтверждения
+- **ChecklistItem** — условие выполнения с весом; прогресс задачи = сумма весов выполненных
+- **VerificationQuestion** — открытый вопрос или тест с правильным вариантом; ответ хранится на вопросе
+- **Assessment** — оценка задачи руководителем по трём критериям; агрегируется в профиль
+  навыков по `competency` задач
+- **User / Comment** — пользователи (роль, руководитель) и комментарии к задачам
