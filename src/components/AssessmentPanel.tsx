@@ -49,7 +49,7 @@ export function AssessmentPanel({ task, currentUserId }: { task: DevelopmentTask
               <div key={key} className="space-y-1.5">
                 <div className="flex items-center justify-between text-sm">
                   <span>{ASSESSMENT_CRITERIA_LABELS[key]}</span>
-                  <span className="text-xs text-muted-foreground">{draft[key]} / 5</span>
+                  <span className="text-xs tabular-nums text-muted-foreground">{draft[key]} / 5</span>
                 </div>
                 <Slider
                   min={1}
@@ -76,7 +76,7 @@ export function AssessmentPanel({ task, currentUserId }: { task: DevelopmentTask
             {CRITERIA_KEYS.map((key) => (
               <div key={key} className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{ASSESSMENT_CRITERIA_LABELS[key]}</span>
-                <span className="font-medium">{assessment[key]} / 5</span>
+                <span className="font-medium tabular-nums">{assessment[key]} / 5</span>
               </div>
             ))}
             {isManager && (

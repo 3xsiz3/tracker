@@ -18,8 +18,10 @@ export function TaskCard({ task }: { task: DevelopmentTask }) {
   const overdue = isOverdue(task)
 
   return (
-    <Link to={`/tasks/${task.id}`}>
-      <Card className={`border-l-4 ${style.border} py-0 transition-shadow hover:shadow-md`}>
+    <Link to={`/tasks/${task.id}`} className="block">
+      <Card
+        className={`border-l-4 ${style.border} py-0 shadow-sm shadow-black/[0.02] transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/[0.06] active:translate-y-0 active:shadow-sm dark:shadow-black/10 dark:hover:shadow-black/25`}
+      >
         <CardContent className="py-4">
           <div className="mb-2 flex items-start justify-between gap-2">
             <h3 className="font-medium leading-snug">{task.title}</h3>
@@ -33,9 +35,9 @@ export function TaskCard({ task }: { task: DevelopmentTask }) {
           <Progress value={progress} className="mb-2 h-1.5" />
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="flex items-center gap-3">
-              <span>{progress}%</span>
+              <span className="tabular-nums">{progress}%</span>
               {task.checklist.length > 0 && (
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1 tabular-nums">
                   <ListChecks className="h-3.5 w-3.5" />
                   {doneCount}/{task.checklist.length}
                 </span>

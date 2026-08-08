@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { CheckCircle2, Clock, ListChecks, Star } from 'lucide-react'
+import { CheckCircle2, Clock, Inbox, ListChecks, Star } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { TaskCard } from '@/components/TaskCard'
 import { StatTile } from '@/components/StatTile'
+import { EmptyState } from '@/components/EmptyState'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import type { TaskStatus } from '@/types'
@@ -37,8 +38,8 @@ export function EmployeeDashboard() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Мои задачи развития</h1>
-        <p className="text-sm text-muted-foreground">Отслеживайте прогресс и делитесь результатами с руководителем</p>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Мои задачи развития</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Отслеживайте прогресс и делитесь результатами с руководителем</p>
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -54,7 +55,7 @@ export function EmployeeDashboard() {
       </div>
 
       {skills.length > 0 && (
-        <div className="mb-6 rounded-xl border p-4">
+        <div className="mb-6 rounded-xl bg-card p-4 shadow-sm shadow-black/[0.02] ring-1 ring-foreground/10 dark:shadow-black/10">
           <h2 className="mb-3 text-sm font-medium">Мои навыки</h2>
           <div className="space-y-2">
             {skills.map((skill) => {
@@ -64,7 +65,7 @@ export function EmployeeDashboard() {
                   <Badge variant="outline" className={`${style.text} border-current`}>
                     {skill.competency}
                   </Badge>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground tabular-nums">
                     {skill.overall} / 5 · {skill.taskCount} {skill.taskCount === 1 ? 'задача' : 'задачи'}
                   </span>
                 </div>
@@ -75,18 +76,20 @@ export function EmployeeDashboard() {
       )}
 
       <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterValue)} className="mb-6">
-        <TabsList>
-          <TabsTrigger value="all">Все ({tasks.length})</TabsTrigger>
-          {(Object.keys(STATUS_LABELS) as TaskStatus[]).map((status) => (
-            <TabsTrigger key={status} value={status}>
-              {STATUS_LABELS[status]} ({tasks.filter((t) => taskStatus(t) === status).length})
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+          <TabsList>
+            <TabsTrigger value="all">Все ({tasks.length})</TabsTrigger>
+            {(Object.keys(STATUS_LABELS) as TaskStatus[]).map((status) => (
+              <TabsTrigger key={status} value={status}>
+                {STATUS_LABELS[status]} ({tasks.filter((t) => taskStatus(t) === status).length})
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
       </Tabs>
 
       {sorted.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Нет задач в этой категории.</p>
+        <EmptyState icon={Inbox} message="Нет задач в этой категории." />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {sorted.map((task) => (

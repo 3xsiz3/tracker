@@ -66,7 +66,7 @@ export function ChecklistView({ task, currentUserId }: { task: DevelopmentTask; 
         {task.checklist.map((it) => (
           <li
             key={it.id}
-            className="flex items-center gap-3 rounded-lg border bg-background px-3 py-2.5 transition-colors has-[:checked]:bg-emerald-50 has-[:checked]:border-emerald-200 dark:has-[:checked]:bg-emerald-950/30 dark:has-[:checked]:border-emerald-900"
+            className="flex items-center gap-3 rounded-lg border border-transparent bg-card px-3 py-2.5 ring-1 ring-foreground/10 transition-colors duration-150 has-[:checked]:border-emerald-300 has-[:checked]:bg-emerald-50 has-[:checked]:ring-emerald-200 dark:has-[:checked]:border-emerald-800 dark:has-[:checked]:bg-emerald-950/30 dark:has-[:checked]:ring-emerald-900"
           >
             <Checkbox
               checked={it.done}
@@ -74,7 +74,7 @@ export function ChecklistView({ task, currentUserId }: { task: DevelopmentTask; 
               onCheckedChange={() => toggleChecklistItem(task.id, it.id)}
             />
             <span className={`flex-1 text-sm ${it.done ? 'text-muted-foreground line-through' : ''}`}>{it.label}</span>
-            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium tabular-nums text-muted-foreground">
               {it.weight}%
             </span>
           </li>

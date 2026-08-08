@@ -33,8 +33,8 @@ export function ManagerReportsPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Отчётность</h1>
-        <p className="text-sm text-muted-foreground">Аналитика по команде: прогресс, оценки, просроченные задачи</p>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Отчётность</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Аналитика по команде: прогресс, оценки, просроченные задачи</p>
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -93,10 +93,10 @@ export function ManagerReportsPage() {
           {rows.length === 0 ? (
             <p className="text-sm text-muted-foreground">В команде пока нет сотрудников.</p>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b text-left text-xs text-muted-foreground">
+                  <tr className="border-b border-border text-left text-xs text-muted-foreground">
                     <th className="pb-2 font-medium">Сотрудник</th>
                     <th className="pb-2 font-medium">Задач</th>
                     <th className="pb-2 font-medium">Завершено</th>
@@ -107,13 +107,13 @@ export function ManagerReportsPage() {
                 </thead>
                 <tbody>
                   {rows.map((row) => (
-                    <tr key={row.employeeId} className="border-b last:border-0">
-                      <td className="py-2">{userLabel(users, row.employeeId)}</td>
-                      <td className="py-2">{row.totalTasks}</td>
-                      <td className="py-2">{row.completedTasks}</td>
-                      <td className="py-2">{row.completionRate}%</td>
-                      <td className="py-2">{row.avgScore !== null ? `${row.avgScore} / 5` : '—'}</td>
-                      <td className="py-2">
+                    <tr key={row.employeeId} className="border-b border-border/70 transition-colors last:border-0 hover:bg-accent/40">
+                      <td className="py-2 pr-4 font-medium">{userLabel(users, row.employeeId)}</td>
+                      <td className="py-2 pr-4 tabular-nums">{row.totalTasks}</td>
+                      <td className="py-2 pr-4 tabular-nums">{row.completedTasks}</td>
+                      <td className="py-2 pr-4 tabular-nums">{row.completionRate}%</td>
+                      <td className="py-2 pr-4 tabular-nums">{row.avgScore !== null ? `${row.avgScore} / 5` : '—'}</td>
+                      <td className="py-2 tabular-nums">
                         {row.overdueCount > 0 ? (
                           <span className="font-medium text-rose-600">{row.overdueCount}</span>
                         ) : (

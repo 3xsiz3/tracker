@@ -1,10 +1,11 @@
 import { Link, Navigate, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ListChecks } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { TaskCard } from '@/components/TaskCard'
 import { NewTaskDialog } from '@/components/NewTaskDialog'
+import { EmptyState } from '@/components/EmptyState'
 import { initials } from '@/lib/selectors'
 import { competencyStyle } from '@/lib/colors'
 import { competencySkills } from '@/lib/skills'
@@ -35,13 +36,13 @@ export function EmployeeDetailPage() {
         <ArrowLeft className="h-4 w-4" /> Назад к команде
       </Link>
 
-      <div className="mb-6 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-10 w-10">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Avatar className="h-10 w-10 shrink-0">
             <AvatarFallback className={`${employee.avatarColor} text-white`}>{initials(employee.name)}</AvatarFallback>
           </Avatar>
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">{employee.name}</h1>
+          <div className="min-w-0">
+            <h1 className="truncate text-xl font-semibold tracking-tight sm:text-2xl">{employee.name}</h1>
             <p className="text-sm text-muted-foreground">{tasks.length} задач развития</p>
           </div>
         </div>
@@ -49,7 +50,7 @@ export function EmployeeDetailPage() {
       </div>
 
       {skills.length > 0 && (
-        <div className="mb-6 rounded-xl border p-4">
+        <div className="mb-6 rounded-xl bg-card p-4 shadow-sm shadow-black/[0.02] ring-1 ring-foreground/10 dark:shadow-black/10">
           <h2 className="mb-3 text-sm font-medium">Навыки</h2>
           <div className="space-y-2">
             {skills.map((skill) => {
@@ -59,7 +60,7 @@ export function EmployeeDetailPage() {
                   <Badge variant="outline" className={`${style.text} border-current`}>
                     {skill.competency}
                   </Badge>
-                  <span className="text-sm text-muted-foreground">
+                  <span className="text-sm text-muted-foreground tabular-nums">
                     {skill.overall} / 5 · {skill.taskCount} {skill.taskCount === 1 ? 'задача' : 'задачи'}
                   </span>
                 </div>
@@ -70,7 +71,7 @@ export function EmployeeDetailPage() {
       )}
 
       {sorted.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Пока нет задач. Создайте первую задачу развития.</p>
+        <EmptyState icon={ListChecks} message="Пока нет задач. Создайте первую задачу развития." />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {sorted.map((task) => (

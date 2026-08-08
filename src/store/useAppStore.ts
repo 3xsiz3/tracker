@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
 import type {
   Assessment,
   AssessmentCriteria,
@@ -10,9 +9,8 @@ import type {
   QuestionType,
   User,
 } from '@/types'
-import { seedAssessments, seedComments, seedTasks, seedUsers } from '@/store/seed'
 import { taskProgress, taskStatus } from '@/lib/task'
-import { avatarColorForIndex } from '@/lib/colors'
+import { supabase } from '@/lib/supabase'
 
 function historyEntry(checklist: ChecklistItem[]) {
   const progress = taskProgress({ checklist })
@@ -25,9 +23,12 @@ interface AppState {
   comments: Comment[]
   assessments: Assessment[]
   currentUserId: string | null
+  loading: boolean
 
-  login: (userId: string) => void
-  logout: () => void
+  setCurrentUserId: (userId: string | null) => void
+  loadAll: () => Promise<void>
+  reset: () => void
+  logout: () => Promise<void>
   createTask: (input: {
     title: string
     description: string
@@ -37,203 +38,188 @@ interface AppState {
     checklistOwner: ChecklistOwner
     checklist: ChecklistItem[]
     dueDate?: string
-  }) => void
-  setChecklist: (taskId: string, items: ChecklistItem[]) => void
-  toggleChecklistItem: (taskId: string, itemId: string) => void
-  addComment: (taskId: string, authorId: string, text: string) => void
-  submitAssessment: (taskId: string, assessedById: string, criteria: AssessmentCriteria) => void
-  confirmTask: (taskId: string, confirmedById: string) => void
-  deleteTask: (taskId: string) => void
-  addEmployee: (input: { name: string; managerId: string }) => void
+  }) => Promise<void>
+  setChecklist: (taskId: string, items: ChecklistItem[]) => Promise<void>
+  toggleChecklistItem: (taskId: string, itemId: string) => Promise<void>
+  addComment: (taskId: string, authorId: string, text: string) => Promise<void>
+  submitAssessment: (taskId: string, assessedById: string, criteria: AssessmentCriteria) => Promise<void>
+  confirmTask: (taskId: string, confirmedById: string) => Promise<void>
+  deleteTask: (taskId: string) => Promise<void>
   addVerificationQuestion: (
     taskId: string,
     input: { text: string; type: QuestionType; options?: string[]; correctOptionIndex?: number },
-  ) => void
-  removeVerificationQuestion: (taskId: string, questionId: string) => void
+  ) => Promise<void>
+  removeVerificationQuestion: (taskId: string, questionId: string) => Promise<void>
   answerVerificationQuestion: (
     taskId: string,
     questionId: string,
     answer: { answerText?: string; selectedOptionIndex?: number },
-  ) => void
+  ) => Promise<void>
 }
 
-export const useAppStore = create<AppState>()(
-  persist(
-    (set) => ({
-      users: seedUsers,
-      tasks: seedTasks,
-      comments: seedComments,
-      assessments: seedAssessments,
-      currentUserId: null,
+const emptyData = { users: [], tasks: [], comments: [], assessments: [], currentUserId: null, loading: false }
 
-      login: (userId) => set({ currentUserId: userId }),
-      logout: () => set({ currentUserId: null }),
+export const useAppStore = create<AppState>()((set, get) => ({
+  users: [],
+  tasks: [],
+  comments: [],
+  assessments: [],
+  currentUserId: null,
+  loading: false,
 
-      createTask: (input) =>
-        set((state) => ({
-          tasks: [
-            ...state.tasks,
-            {
-              id: crypto.randomUUID(),
-              title: input.title,
-              description: input.description,
-              competency: input.competency,
-              assigneeId: input.assigneeId,
-              createdById: input.createdById,
-              checklistOwner: input.checklistOwner,
-              checklist: input.checklist,
-              dueDate: input.dueDate,
-              createdAt: new Date().toISOString(),
-              history: [historyEntry(input.checklist)],
-              verificationQuestions: [],
-            },
-          ],
-        })),
+  setCurrentUserId: (userId) => set({ currentUserId: userId }),
 
-      setChecklist: (taskId, items) =>
-        set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === taskId
-              ? {
-                  ...task,
-                  checklist: items,
-                  confirmedAt: undefined,
-                  confirmedById: undefined,
-                  history: [...task.history, historyEntry(items)],
-                }
-              : task,
-          ),
-        })),
+  loadAll: async () => {
+    set({ loading: true })
+    const [profiles, tasks, comments, assessments] = await Promise.all([
+      supabase.from('profiles').select('*'),
+      supabase.from('tasks').select('*'),
+      supabase.from('comments').select('*'),
+      supabase.from('assessments').select('*'),
+    ])
+    set({
+      users: profiles.data ?? [],
+      tasks: tasks.data ?? [],
+      comments: comments.data ?? [],
+      assessments: assessments.data ?? [],
+      loading: false,
+    })
+  },
 
-      toggleChecklistItem: (taskId, itemId) =>
-        set((state) => ({
-          tasks: state.tasks.map((task) => {
-            if (task.id !== taskId) return task
-            const checklist = task.checklist.map((it) => (it.id === itemId ? { ...it, done: !it.done } : it))
-            return {
-              ...task,
-              checklist,
-              confirmedAt: undefined,
-              confirmedById: undefined,
-              history: [...task.history, historyEntry(checklist)],
-            }
-          }),
-        })),
+  reset: () => set(emptyData),
 
-      addComment: (taskId, authorId, text) =>
-        set((state) => ({
-          comments: [
-            ...state.comments,
-            {
-              id: crypto.randomUUID(),
-              taskId,
-              authorId,
-              text,
-              createdAt: new Date().toISOString(),
-            },
-          ],
-        })),
+  logout: async () => {
+    await supabase.auth.signOut()
+    set(emptyData)
+  },
 
-      submitAssessment: (taskId, assessedById, criteria) =>
-        set((state) => ({
-          assessments: [
-            ...state.assessments.filter((a) => a.taskId !== taskId),
-            { taskId, assessedById, assessedAt: new Date().toISOString(), ...criteria },
-          ],
-        })),
+  createTask: async (input) => {
+    const task: DevelopmentTask = {
+      id: crypto.randomUUID(),
+      title: input.title,
+      description: input.description,
+      competency: input.competency,
+      assigneeId: input.assigneeId,
+      createdById: input.createdById,
+      checklistOwner: input.checklistOwner,
+      checklist: input.checklist,
+      dueDate: input.dueDate,
+      createdAt: new Date().toISOString(),
+      history: [historyEntry(input.checklist)],
+      verificationQuestions: [],
+    }
+    set((state) => ({ tasks: [...state.tasks, task] }))
+    const { error } = await supabase.from('tasks').insert(task)
+    if (error) console.error('createTask failed', error)
+  },
 
-      confirmTask: (taskId, confirmedById) =>
-        set((state) => ({
-          tasks: state.tasks.map((task) => {
-            if (task.id !== taskId) return task
-            const confirmedAt = new Date().toISOString()
-            return {
-              ...task,
-              confirmedAt,
-              confirmedById,
-              history: [...task.history, { at: confirmedAt, status: 'completed', progress: 100 }],
-            }
-          }),
-        })),
+  setChecklist: async (taskId, items) => {
+    const task = get().tasks.find((t) => t.id === taskId)
+    if (!task) return
+    const history = [...task.history, historyEntry(items)]
+    set((state) => ({
+      tasks: state.tasks.map((t) =>
+        t.id === taskId ? { ...t, checklist: items, confirmedAt: undefined, confirmedById: undefined, history } : t,
+      ),
+    }))
+    const { error } = await supabase
+      .from('tasks')
+      .update({ checklist: items, confirmedAt: null, confirmedById: null, history })
+      .eq('id', taskId)
+    if (error) console.error('setChecklist failed', error)
+  },
 
-      deleteTask: (taskId) =>
-        set((state) => ({
-          tasks: state.tasks.filter((t) => t.id !== taskId),
-          comments: state.comments.filter((c) => c.taskId !== taskId),
-          assessments: state.assessments.filter((a) => a.taskId !== taskId),
-        })),
+  toggleChecklistItem: async (taskId, itemId) => {
+    const task = get().tasks.find((t) => t.id === taskId)
+    if (!task) return
+    const checklist = task.checklist.map((it) => (it.id === itemId ? { ...it, done: !it.done } : it))
+    const history = [...task.history, historyEntry(checklist)]
+    set((state) => ({
+      tasks: state.tasks.map((t) =>
+        t.id === taskId ? { ...t, checklist, confirmedAt: undefined, confirmedById: undefined, history } : t,
+      ),
+    }))
+    const { error } = await supabase
+      .from('tasks')
+      .update({ checklist, confirmedAt: null, confirmedById: null, history })
+      .eq('id', taskId)
+    if (error) console.error('toggleChecklistItem failed', error)
+  },
 
-      addEmployee: (input) =>
-        set((state) => ({
-          users: [
-            ...state.users,
-            {
-              id: crypto.randomUUID(),
-              name: input.name,
-              role: 'employee',
-              managerId: input.managerId,
-              avatarColor: avatarColorForIndex(state.users.length),
-            },
-          ],
-        })),
+  addComment: async (taskId, authorId, text) => {
+    const comment: Comment = { id: crypto.randomUUID(), taskId, authorId, text, createdAt: new Date().toISOString() }
+    set((state) => ({ comments: [...state.comments, comment] }))
+    const { error } = await supabase.from('comments').insert(comment)
+    if (error) console.error('addComment failed', error)
+  },
 
-      addVerificationQuestion: (taskId, input) =>
-        set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === taskId
-              ? {
-                  ...task,
-                  verificationQuestions: [
-                    ...task.verificationQuestions,
-                    {
-                      id: crypto.randomUUID(),
-                      text: input.text,
-                      type: input.type,
-                      options: input.options,
-                      correctOptionIndex: input.correctOptionIndex,
-                    },
-                  ],
-                }
-              : task,
-          ),
-        })),
+  submitAssessment: async (taskId, assessedById, criteria) => {
+    const assessment: Assessment = { taskId, assessedById, assessedAt: new Date().toISOString(), ...criteria }
+    set((state) => ({
+      assessments: [...state.assessments.filter((a) => a.taskId !== taskId), assessment],
+    }))
+    const { error } = await supabase.from('assessments').upsert(assessment)
+    if (error) console.error('submitAssessment failed', error)
+  },
 
-      removeVerificationQuestion: (taskId, questionId) =>
-        set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === taskId
-              ? { ...task, verificationQuestions: task.verificationQuestions.filter((q) => q.id !== questionId) }
-              : task,
-          ),
-        })),
+  confirmTask: async (taskId, confirmedById) => {
+    const task = get().tasks.find((t) => t.id === taskId)
+    if (!task) return
+    const confirmedAt = new Date().toISOString()
+    const history = [...task.history, { at: confirmedAt, status: 'completed' as const, progress: 100 }]
+    set((state) => ({
+      tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, confirmedAt, confirmedById, history } : t)),
+    }))
+    const { error } = await supabase.from('tasks').update({ confirmedAt, confirmedById, history }).eq('id', taskId)
+    if (error) console.error('confirmTask failed', error)
+  },
 
-      answerVerificationQuestion: (taskId, questionId, answer) =>
-        set((state) => ({
-          tasks: state.tasks.map((task) =>
-            task.id === taskId
-              ? {
-                  ...task,
-                  verificationQuestions: task.verificationQuestions.map((q) =>
-                    q.id === questionId ? { ...q, ...answer, answeredAt: new Date().toISOString() } : q,
-                  ),
-                }
-              : task,
-          ),
-        })),
-    }),
-    {
-      name: 'skill-tracker-storage-v2',
-      version: 1,
-      migrate: (persistedState) => {
-        const state = persistedState as AppState
-        if (Array.isArray(state?.tasks)) {
-          state.tasks = state.tasks.map((task) => ({
-            ...task,
-            verificationQuestions: Array.isArray(task.verificationQuestions) ? task.verificationQuestions : [],
-          }))
-        }
-        return state
+  deleteTask: async (taskId) => {
+    set((state) => ({
+      tasks: state.tasks.filter((t) => t.id !== taskId),
+      comments: state.comments.filter((c) => c.taskId !== taskId),
+      assessments: state.assessments.filter((a) => a.taskId !== taskId),
+    }))
+    const { error } = await supabase.from('tasks').delete().eq('id', taskId)
+    if (error) console.error('deleteTask failed', error)
+  },
+
+  addVerificationQuestion: async (taskId, input) => {
+    const task = get().tasks.find((t) => t.id === taskId)
+    if (!task) return
+    const verificationQuestions = [
+      ...task.verificationQuestions,
+      {
+        id: crypto.randomUUID(),
+        text: input.text,
+        type: input.type,
+        options: input.options,
+        correctOptionIndex: input.correctOptionIndex,
       },
-    },
-  ),
-)
+    ]
+    set((state) => ({ tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, verificationQuestions } : t)) }))
+    const { error } = await supabase.from('tasks').update({ verificationQuestions }).eq('id', taskId)
+    if (error) console.error('addVerificationQuestion failed', error)
+  },
+
+  removeVerificationQuestion: async (taskId, questionId) => {
+    const task = get().tasks.find((t) => t.id === taskId)
+    if (!task) return
+    const verificationQuestions = task.verificationQuestions.filter((q) => q.id !== questionId)
+    set((state) => ({ tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, verificationQuestions } : t)) }))
+    const { error } = await supabase.from('tasks').update({ verificationQuestions }).eq('id', taskId)
+    if (error) console.error('removeVerificationQuestion failed', error)
+  },
+
+  answerVerificationQuestion: async (taskId, questionId, answer) => {
+    const task = get().tasks.find((t) => t.id === taskId)
+    if (!task) return
+    const answeredAt = new Date().toISOString()
+    const verificationQuestions = task.verificationQuestions.map((q) =>
+      q.id === questionId ? { ...q, ...answer, answeredAt } : q,
+    )
+    set((state) => ({ tasks: state.tasks.map((t) => (t.id === taskId ? { ...t, verificationQuestions } : t)) }))
+    const { error } = await supabase.from('tasks').update({ verificationQuestions }).eq('id', taskId)
+    if (error) console.error('answerVerificationQuestion failed', error)
+  },
+}))

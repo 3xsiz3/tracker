@@ -7,8 +7,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { NewTaskDialog } from '@/components/NewTaskDialog'
-import { AddEmployeeDialog } from '@/components/AddEmployeeDialog'
 import { StatTile } from '@/components/StatTile'
+import { EmptyState } from '@/components/EmptyState'
 import { initials } from '@/lib/selectors'
 import { taskProgress, taskStatus } from '@/lib/task'
 import { assessmentOverall } from '@/lib/skills'
@@ -38,10 +38,9 @@ export function ManagerDashboard() {
     <div>
       <div className="mb-6 flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Моя команда</h1>
-          <p className="text-sm text-muted-foreground">Задачи развития и прогресс ваших сотрудников</p>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Моя команда</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Задачи развития и прогресс ваших сотрудников</p>
         </div>
-        <AddEmployeeDialog managerId={currentUserId} />
       </div>
 
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -62,7 +61,7 @@ export function ManagerDashboard() {
                 <Link
                   key={task.id}
                   to={`/tasks/${task.id}`}
-                  className="flex items-center justify-between gap-3 rounded-lg border bg-background px-3 py-2.5 text-sm transition-colors hover:bg-accent"
+                  className="flex items-center justify-between gap-3 rounded-lg bg-card px-3 py-2.5 text-sm ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-accent/60"
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
                     {overdue ? (
@@ -90,7 +89,7 @@ export function ManagerDashboard() {
       )}
 
       {reports.length === 0 ? (
-        <p className="text-sm text-muted-foreground">У вас пока нет сотрудников в подчинении.</p>
+        <EmptyState icon={Users} message="У вас пока нет сотрудников в подчинении." />
       ) : (
         <>
           <h2 className="mb-3 text-sm font-medium">Сотрудники</h2>
@@ -116,17 +115,17 @@ export function ManagerDashboard() {
                 .reduce<string | null>((latest, entry) => (!latest || entry.at > latest ? entry.at : latest), null)
 
               return (
-                <Card key={employee.id} className="border-none shadow-sm">
+                <Card key={employee.id} className="shadow-sm shadow-black/[0.02] dark:shadow-black/10">
                   <CardContent className="py-4">
                     <div className="mb-3 flex items-center justify-between gap-2">
-                      <Link to={`/manager/employees/${employee.id}`} className="flex items-center gap-3">
-                        <Avatar className="h-10 w-10 ring-2 ring-background">
+                      <Link to={`/manager/employees/${employee.id}`} className="flex min-w-0 flex-1 items-center gap-3">
+                        <Avatar className="h-10 w-10 shrink-0 ring-2 ring-background">
                           <AvatarFallback className={`${employee.avatarColor} text-white`}>
                             {initials(employee.name)}
                           </AvatarFallback>
                         </Avatar>
-                        <div>
-                          <p className="font-medium leading-none">{employee.name}</p>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium leading-none">{employee.name}</p>
                           <p className="mt-1 text-xs text-muted-foreground">
                             {employeeTasks.length} задач · {employeeCompleted} завершено
                           </p>

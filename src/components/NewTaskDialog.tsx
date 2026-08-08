@@ -139,7 +139,7 @@ export function NewTaskDialog({ assigneeId, createdById }: { assigneeId: string;
                   {checklist.map((it) => (
                     <div key={it.id} className="flex items-center justify-between text-sm">
                       <span>{it.label}</span>
-                      <span className="text-xs text-muted-foreground">{it.weight}%</span>
+                      <span className="text-xs tabular-nums text-muted-foreground">{it.weight}%</span>
                     </div>
                   ))}
                 </div>

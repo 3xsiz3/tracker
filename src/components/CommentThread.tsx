@@ -45,7 +45,7 @@ export function CommentThread({ taskId, currentUserId }: { taskId: string; curre
         )
       })}
 
-      <div className="flex gap-2 pt-2">
+      <div className="flex flex-col gap-2 pt-2 sm:flex-row">
         <Textarea
           value={text}
           onChange={(e) => setText(e.target.value)}

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AppShell } from '@/components/AppShell'
 import { LoginPage } from '@/pages/LoginPage'
@@ -7,8 +8,32 @@ import { ManagerReportsPage } from '@/pages/ManagerReportsPage'
 import { EmployeeDetailPage } from '@/pages/EmployeeDetailPage'
 import { EmployeeDashboard } from '@/pages/EmployeeDashboard'
 import { TaskDetailPage } from '@/pages/TaskDetailPage'
+import { supabase } from '@/lib/supabase'
+import { useAppStore } from '@/store/useAppStore'
 
 function App() {
+  const [authReady, setAuthReady] = useState(false)
+  const setCurrentUserId = useAppStore((s) => s.setCurrentUserId)
+  const loadAll = useAppStore((s) => s.loadAll)
+  const reset = useAppStore((s) => s.reset)
+
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setCurrentUserId(session.user.id)
+        if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') loadAll()
+      } else {
+        reset()
+      }
+      setAuthReady(true)
+    })
+    return () => subscription.unsubscribe()
+  }, [setCurrentUserId, loadAll, reset])
+
+  if (!authReady) return null
+
   return (
     <BrowserRouter>
       <Routes>

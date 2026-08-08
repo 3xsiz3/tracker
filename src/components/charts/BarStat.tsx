@@ -33,9 +33,9 @@ export function BarStat({
             >
               <span className="w-32 shrink-0 truncate text-sm">{item.label}</span>
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                <div className="h-full rounded-full bg-violet-500 transition-all" style={{ width: `${pct}%` }} />
+                <div className="h-full rounded-full bg-primary transition-all duration-300 ease-out" style={{ width: `${pct}%` }} />
               </div>
-              <span className="w-14 shrink-0 text-right text-sm font-medium">{item.displayValue}</span>
+              <span className="w-14 shrink-0 text-right text-sm font-medium tabular-nums">{item.displayValue}</span>
               {hovered === item.key && (
                 <div className="absolute top-full left-32 z-10 mt-1 whitespace-nowrap rounded-md bg-foreground px-2 py-1 text-xs text-background shadow-md">
                   {item.tooltip}
@@ -70,9 +70,9 @@ export function BarStat({
                   {item.tooltip}
                 </div>
               )}
-              <span className="mb-1 text-xs font-medium text-muted-foreground">{item.displayValue}</span>
+              <span className="mb-1 text-xs font-medium tabular-nums text-muted-foreground">{item.displayValue}</span>
               <div
-                className="w-full max-w-8 rounded-t-md bg-violet-500 transition-all"
+                className="w-full max-w-8 rounded-t-md bg-primary transition-all duration-300 ease-out"
                 style={{ height: `${pct}%`, minHeight: item.value > 0 ? '4px' : 0 }}
               />
             </div>

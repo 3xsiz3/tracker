@@ -1,0 +1,21 @@
+-- Шаблон для заведения реальных людей после того, как schema.sql уже выполнен.
+--
+-- Порядок на каждого человека:
+--   1. Supabase Dashboard -> Authentication -> Users -> Add user
+--      (email + временный пароль, включить "Auto Confirm User")
+--   2. Скопировать сгенерированный UUID пользователя (колонка "UID" в списке Users)
+--   3. Подставить этот UUID вместо '<UUID-РУКОВОДИТЕЛЯ>' / '<UUID-СОТРУДНИКА-1>' и т.д.
+--      ниже, поправить имена, и выполнить весь файл в SQL Editor.
+--
+-- Сначала обязательно создайте руководителя — сотрудники ссылаются на его id через managerId.
+
+insert into public.profiles (id, name, role, "avatarColor")
+values ('d537fcff-504f-49f7-81cb-809c72317779', 'Артем Фатеев', 'manager', 'bg-violet-500');
+
+insert into public.profiles (id, name, role, "managerId", "avatarColor")
+values
+  ('0e1447a3-b5c7-4aec-9d8a-ca144eaf8c88', 'lelya miwen', 'employee', 'd537fcff-504f-49f7-81cb-809c72317779', 'bg-emerald-500'),
+  ('16ee417c-56c6-4ee1-a936-a012b1e19a02', 'sunny bw', 'employee', 'd537fcff-504f-49f7-81cb-809c72317779', 'bg-amber-500');
+
+-- Доступные цвета аватара (просто фон, можно повторять): bg-violet-500, bg-blue-500,
+-- bg-emerald-500, bg-amber-500, bg-rose-500, bg-cyan-500, bg-fuchsia-500, bg-indigo-500

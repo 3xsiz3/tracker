@@ -42,12 +42,12 @@ export function ChecklistEditor({
     <div className="space-y-3">
       <div className="space-y-2">
         {items.map((it) => (
-          <div key={it.id} className="flex items-center gap-2">
+          <div key={it.id} className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
             <Input
               value={it.label}
               onChange={(e) => updateItem(it.id, { label: e.target.value })}
               placeholder="Условие выполнения, например: посмотреть видео"
-              className="flex-1"
+              className="min-w-[10rem] flex-1"
             />
             <div className="relative w-24 shrink-0">
               <Input
@@ -80,7 +80,7 @@ export function ChecklistEditor({
         <Button type="button" variant="outline" size="sm" onClick={addRow}>
           <Plus className="h-3.5 w-3.5" /> Добавить условие
         </Button>
-        <span className={`text-xs font-medium ${total === 100 ? 'text-emerald-600' : 'text-muted-foreground'}`}>
+        <span className={`text-xs font-medium tabular-nums ${total === 100 ? 'text-emerald-600' : 'text-muted-foreground'}`}>
           Сумма: {total}% {remaining !== 0 && `(осталось ${remaining}%)`}
         </span>
       </div>
