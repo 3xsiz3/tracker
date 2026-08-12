@@ -1,4 +1,5 @@
-import type { TaskStatus } from '@/types'
+import { AlertTriangle, CheckCircle2, Circle, Clock3, ListTodo, type LucideIcon } from 'lucide-react'
+import type { EffectiveStatus } from '@/lib/task'
 
 const COMPETENCY_PALETTE = [
   { border: 'border-l-violet-500', text: 'text-violet-700 dark:text-violet-400', bg: 'bg-violet-500/10' },
@@ -15,11 +16,12 @@ export function competencyStyle(competency: string) {
   return COMPETENCY_PALETTE[hash % COMPETENCY_PALETTE.length]
 }
 
-export const STATUS_PILL: Record<TaskStatus, { className: string }> = {
-  not_started: { className: 'bg-muted text-muted-foreground' },
-  in_progress: { className: 'bg-blue-500/10 text-blue-700 dark:text-blue-400' },
-  pending_review: { className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400' },
-  completed: { className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
+export const STATUS_META: Record<EffectiveStatus, { label: string; icon: LucideIcon; className: string }> = {
+  not_started: { label: 'Не начато', icon: Circle, className: 'bg-muted text-muted-foreground' },
+  in_progress: { label: 'В процессе', icon: ListTodo, className: 'bg-blue-500/10 text-blue-700 dark:text-blue-400' },
+  pending_review: { label: 'На проверке', icon: Clock3, className: 'bg-amber-500/10 text-amber-700 dark:text-amber-400' },
+  completed: { label: 'Завершено', icon: CheckCircle2, className: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' },
+  overdue: { label: 'Просрочено', icon: AlertTriangle, className: 'bg-rose-500/10 text-rose-700 dark:text-rose-400' },
 }
 
 const AVATAR_COLORS = [

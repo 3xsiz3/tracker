@@ -12,16 +12,10 @@ import { ChecklistView } from '@/components/ChecklistView'
 import { VerificationPanel } from '@/components/VerificationPanel'
 import { AssessmentPanel } from '@/components/AssessmentPanel'
 import { CommentThread } from '@/components/CommentThread'
+import { StatusBadge } from '@/components/StatusBadge'
 import { STATUS_LABELS } from '@/types'
 import { taskProgress, taskStatus } from '@/lib/task'
 import { userLabel } from '@/lib/selectors'
-
-const statusVariant = {
-  not_started: 'outline',
-  in_progress: 'default',
-  pending_review: 'default',
-  completed: 'secondary',
-} as const
 
 export function TaskDetailPage() {
   const { taskId } = useParams<{ taskId: string }>()
@@ -108,7 +102,7 @@ export function TaskDetailPage() {
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-medium">Прогресс</h2>
             <div className="flex items-center gap-2">
-              <Badge variant={statusVariant[status]}>{STATUS_LABELS[status]}</Badge>
+              <StatusBadge task={task} />
               <span className="text-sm text-muted-foreground tabular-nums">{progress}%</span>
             </div>
           </div>
@@ -142,11 +136,15 @@ export function TaskDetailPage() {
               <h3 className="mb-2 text-xs font-medium text-muted-foreground">История изменений</h3>
               <ul className="space-y-1.5">
                 {history.map((entry, i) => (
-                  <li key={i} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                    <span className="tabular-nums">
-                      {STATUS_LABELS[entry.status]} · {entry.progress}%
+                  <li key={i} className="flex flex-wrap items-start justify-between gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                    <span>
+                      {entry.note && <span className="text-foreground">{entry.note}</span>}
+                      <span className="tabular-nums">
+                        {entry.note && ' · '}
+                        {STATUS_LABELS[entry.status]} · {entry.progress}%
+                      </span>
                     </span>
-                    <span className="tabular-nums">{format(new Date(entry.at), 'd MMM yyyy, HH:mm', { locale: ru })}</span>
+                    <span className="shrink-0 tabular-nums">{format(new Date(entry.at), 'd MMM yyyy, HH:mm', { locale: ru })}</span>
                   </li>
                 ))}
               </ul>

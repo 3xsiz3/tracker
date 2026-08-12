@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { ArrowLeft, ListChecks } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
@@ -6,9 +7,11 @@ import { Badge } from '@/components/ui/badge'
 import { TaskCard } from '@/components/TaskCard'
 import { NewTaskDialog } from '@/components/NewTaskDialog'
 import { EmptyState } from '@/components/EmptyState'
+import { StatusFilterBar, type TaskFilterValue } from '@/components/StatusFilterBar'
 import { initials } from '@/lib/selectors'
 import { competencyStyle } from '@/lib/colors'
 import { competencySkills } from '@/lib/skills'
+import { taskStatus } from '@/lib/task'
 
 export function EmployeeDetailPage() {
   const { employeeId } = useParams<{ employeeId: string }>()
@@ -17,6 +20,7 @@ export function EmployeeDetailPage() {
   const allTasks = useAppStore((s) => s.tasks)
   const allAssessments = useAppStore((s) => s.assessments)
   const tasks = allTasks.filter((t) => t.assigneeId === employeeId)
+  const [filter, setFilter] = useState<TaskFilterValue>('all')
   const skills = competencySkills(
     tasks,
     allAssessments.filter((a) => tasks.some((t) => t.id === a.taskId)),
@@ -28,7 +32,8 @@ export function EmployeeDetailPage() {
     return <Navigate to="/manager" replace />
   }
 
-  const sorted = [...tasks].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const filtered = tasks.filter((t) => filter === 'all' || taskStatus(t) === filter)
+  const sorted = [...filtered].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
 
   return (
     <div>
@@ -70,14 +75,23 @@ export function EmployeeDetailPage() {
         </div>
       )}
 
-      {sorted.length === 0 ? (
+      {tasks.length === 0 ? (
         <EmptyState icon={ListChecks} message="Пока нет задач. Создайте первую задачу развития." />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {sorted.map((task) => (
-            <TaskCard key={task.id} task={task} />
-          ))}
-        </div>
+        <>
+          <div className="mb-6">
+            <StatusFilterBar tasks={tasks} value={filter} onChange={setFilter} />
+          </div>
+          {sorted.length === 0 ? (
+            <EmptyState icon={ListChecks} message="Нет задач в этой категории." />
+          ) : (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {sorted.map((task) => (
+                <TaskCard key={task.id} task={task} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )

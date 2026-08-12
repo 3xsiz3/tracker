@@ -10,12 +10,12 @@ import { AttachmentRow } from '@/components/AttachmentRow'
 import { initials } from '@/lib/selectors'
 import { formatFileSize } from '@/lib/utils'
 
-export function CommentThread({ taskId, currentUserId }: { taskId: string; currentUserId: string }) {
-  const allComments = useAppStore((s) => s.comments)
-  const comments = allComments.filter((c) => c.taskId === taskId)
+export function FileCommentThread({ fileId, currentUserId }: { fileId: string; currentUserId: string }) {
+  const allComments = useAppStore((s) => s.fileComments)
+  const comments = allComments.filter((c) => c.fileId === fileId)
   const users = useAppStore((s) => s.users)
-  const addComment = useAppStore((s) => s.addComment)
-  const deleteComment = useAppStore((s) => s.deleteComment)
+  const addFileComment = useAppStore((s) => s.addFileComment)
+  const deleteFileComment = useAppStore((s) => s.deleteFileComment)
   const [text, setText] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [sending, setSending] = useState(false)
@@ -38,7 +38,7 @@ export function CommentThread({ taskId, currentUserId }: { taskId: string; curre
     if (!text.trim() && files.length === 0) return
     setSending(true)
     try {
-      await addComment(taskId, currentUserId, text.trim(), files.length > 0 ? files : undefined)
+      await addFileComment(fileId, currentUserId, text.trim(), files.length > 0 ? files : undefined)
       setText('')
       setFiles([])
     } finally {
@@ -48,7 +48,7 @@ export function CommentThread({ taskId, currentUserId }: { taskId: string; curre
 
   return (
     <div className="space-y-4">
-      {sorted.length === 0 && <p className="text-sm text-muted-foreground">Комментариев пока нет.</p>}
+      {sorted.length === 0 && <p className="text-sm text-muted-foreground">Пока нет обсуждения.</p>}
       {sorted.map((comment) => {
         const author = users.find((u) => u.id === comment.authorId)
         return (
@@ -91,7 +91,7 @@ export function CommentThread({ taskId, currentUserId }: { taskId: string; curre
                     size="sm"
                     className="h-6 text-xs"
                     onClick={() => {
-                      deleteComment(comment.id)
+                      deleteFileComment(comment.id)
                       setConfirmDeleteId(null)
                     }}
                   >

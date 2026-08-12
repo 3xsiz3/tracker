@@ -1,12 +1,10 @@
 import { startOfWeek, subWeeks, format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import type { Assessment, DevelopmentTask, User } from '@/types'
-import { taskStatus } from '@/lib/task'
+import { isOverdue, taskStatus } from '@/lib/task'
 import { assessmentOverall } from '@/lib/skills'
 
-export function isOverdue(task: DevelopmentTask): boolean {
-  return !!task.dueDate && new Date(task.dueDate) < new Date() && taskStatus(task) !== 'completed'
-}
+export { isOverdue }
 
 export interface WeekBucket {
   weekStart: string

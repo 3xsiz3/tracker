@@ -3,16 +3,14 @@ import { AlertTriangle, CalendarDays, ListChecks } from 'lucide-react'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
 import type { DevelopmentTask } from '@/types'
-import { STATUS_LABELS } from '@/types'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
-import { taskProgress, taskStatus } from '@/lib/task'
-import { competencyStyle, STATUS_PILL } from '@/lib/colors'
-import { isOverdue } from '@/lib/reports'
+import { StatusBadge } from '@/components/StatusBadge'
+import { taskProgress, isOverdue } from '@/lib/task'
+import { competencyStyle } from '@/lib/colors'
 
 export function TaskCard({ task }: { task: DevelopmentTask }) {
   const progress = taskProgress(task)
-  const status = taskStatus(task)
   const style = competencyStyle(task.competency)
   const doneCount = task.checklist.filter((i) => i.done).length
   const overdue = isOverdue(task)
@@ -25,9 +23,7 @@ export function TaskCard({ task }: { task: DevelopmentTask }) {
         <CardContent className="py-4">
           <div className="mb-2 flex items-start justify-between gap-2">
             <h3 className="font-medium leading-snug">{task.title}</h3>
-            <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_PILL[status].className}`}>
-              {STATUS_LABELS[status]}
-            </span>
+            <StatusBadge task={task} />
           </div>
           <p className={`mb-3 inline-block rounded px-1.5 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}>
             {task.competency}

@@ -9,12 +9,10 @@ import { Progress } from '@/components/ui/progress'
 import { NewTaskDialog } from '@/components/NewTaskDialog'
 import { StatTile } from '@/components/StatTile'
 import { EmptyState } from '@/components/EmptyState'
+import { StatusBadge } from '@/components/StatusBadge'
 import { initials } from '@/lib/selectors'
-import { taskProgress, taskStatus } from '@/lib/task'
+import { taskProgress, taskStatus, isOverdue } from '@/lib/task'
 import { assessmentOverall } from '@/lib/skills'
-import { isOverdue } from '@/lib/reports'
-import { STATUS_LABELS } from '@/types'
-import { STATUS_PILL } from '@/lib/colors'
 
 export function ManagerDashboard() {
   const currentUserId = useAppStore((s) => s.currentUserId)!
@@ -56,7 +54,6 @@ export function ManagerDashboard() {
           <div className="space-y-2">
             {attentionTasks.map((task) => {
               const employee = reports.find((r) => r.id === task.assigneeId)
-              const overdue = isOverdue(task)
               return (
                 <Link
                   key={task.id}
@@ -64,23 +61,13 @@ export function ManagerDashboard() {
                   className="flex items-center justify-between gap-3 rounded-lg bg-card px-3 py-2.5 text-sm ring-1 ring-foreground/10 transition-colors duration-150 hover:bg-accent/60"
                 >
                   <div className="flex min-w-0 items-center gap-2.5">
-                    {overdue ? (
-                      <AlertTriangle className="h-4 w-4 shrink-0 text-rose-600" />
-                    ) : (
-                      <Clock className="h-4 w-4 shrink-0 text-amber-600" />
-                    )}
+                    <Clock className="h-4 w-4 shrink-0 text-amber-600" />
                     <div className="min-w-0">
                       <p className="truncate font-medium">{task.title}</p>
                       <p className="truncate text-xs text-muted-foreground">{employee?.name}</p>
                     </div>
                   </div>
-                  <span
-                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                      overdue ? 'bg-rose-500/10 text-rose-700 dark:text-rose-400' : STATUS_PILL.pending_review.className
-                    }`}
-                  >
-                    {overdue ? 'Просрочено' : STATUS_LABELS.pending_review}
-                  </span>
+                  <StatusBadge task={task} />
                 </Link>
               )
             })}

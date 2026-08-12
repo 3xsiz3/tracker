@@ -12,6 +12,12 @@ export function taskStatus(task: Pick<DevelopmentTask, 'checklist' | 'confirmedA
   return task.confirmedAt ? 'completed' : 'pending_review'
 }
 
+export function isOverdue(task: Pick<DevelopmentTask, 'checklist' | 'confirmedAt' | 'dueDate'>): boolean {
+  return !!task.dueDate && new Date(task.dueDate) < new Date() && taskStatus(task) !== 'completed'
+}
+
+export type EffectiveStatus = TaskStatus | 'overdue'
+
 export function checklistWeightSum(items: { weight: number }[]): number {
   return items.reduce((sum, item) => sum + (Number.isFinite(item.weight) ? item.weight : 0), 0)
 }

@@ -14,6 +14,7 @@ export interface ProgressEntry {
   at: string
   status: TaskStatus
   progress: number
+  note?: string
 }
 
 export interface ChecklistItem {
@@ -55,12 +56,50 @@ export interface VerificationQuestion {
   answeredAt?: string
 }
 
+export interface Attachment {
+  name: string
+  path: string
+  size: number
+  type: string
+}
+
+export interface FileVersion {
+  fileName: string
+  path: string
+  size: number
+  type: string
+  uploadedById: string
+  createdAt: string
+  note?: string
+}
+
+export interface ProjectFile {
+  id: string
+  name: string
+  note: string
+  uploadedById: string
+  taskId?: string
+  createdAt: string
+  visibleTo: string[]
+  versions: FileVersion[]
+}
+
+export interface FileComment {
+  id: string
+  fileId: string
+  authorId: string
+  text: string
+  createdAt: string
+  attachments: Attachment[]
+}
+
 export interface Comment {
   id: string
   taskId: string
   authorId: string
   text: string
   createdAt: string
+  attachments: Attachment[]
 }
 
 export interface AssessmentCriteria {

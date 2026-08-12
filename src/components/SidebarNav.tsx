@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
-import { BarChart3, LayoutGrid, ListChecks, LogOut, Sparkles, Users } from 'lucide-react'
+import { BarChart3, FileText, LayoutGrid, ListChecks, LogOut, Sparkles, Users } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
@@ -55,6 +55,9 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
       <nav className="flex-1 space-y-1 overflow-y-auto px-3">
         <NavLink to="/" end onClick={onNavigate} className={({ isActive }) => linkClass(isActive)}>
           <LayoutGrid className="h-4 w-4" /> Обзор
+        </NavLink>
+        <NavLink to="/files" onClick={onNavigate} className={({ isActive }) => linkClass(isActive)}>
+          <FileText className="h-4 w-4" /> Файлы
         </NavLink>
         {navItems.map(({ to, label, icon: Icon, isActive }) => (
           <NavLink key={to} to={to} onClick={onNavigate} className={linkClass(isActive)}>

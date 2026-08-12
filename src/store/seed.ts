@@ -174,6 +174,7 @@ export const seedComments: Comment[] = [
     authorId: 'm1',
     text: 'Отличный прогресс! Не забудь добавить примеры из реальных кейсов.',
     createdAt: daysAgo(6),
+    attachments: [],
   },
   {
     id: 'c2',
@@ -181,6 +182,7 @@ export const seedComments: Comment[] = [
     authorId: 'e1',
     text: 'Спасибо, уже готовлю слайды с кейсами.',
     createdAt: daysAgo(5),
+    attachments: [],
   },
   {
     id: 'c3',
@@ -188,6 +190,7 @@ export const seedComments: Comment[] = [
     authorId: 'm1',
     text: 'Отличная работа на ролевой игре, видно уверенность в диалогах.',
     createdAt: daysAgo(4),
+    attachments: [],
   },
 ]
 

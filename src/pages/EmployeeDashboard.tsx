@@ -4,22 +4,18 @@ import { useAppStore } from '@/store/useAppStore'
 import { TaskCard } from '@/components/TaskCard'
 import { StatTile } from '@/components/StatTile'
 import { EmptyState } from '@/components/EmptyState'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
-import type { TaskStatus } from '@/types'
-import { STATUS_LABELS } from '@/types'
+import { StatusFilterBar, type TaskFilterValue } from '@/components/StatusFilterBar'
 import { taskStatus } from '@/lib/task'
 import { assessmentOverall, competencySkills } from '@/lib/skills'
 import { competencyStyle } from '@/lib/colors'
-
-type FilterValue = TaskStatus | 'all'
 
 export function EmployeeDashboard() {
   const currentUserId = useAppStore((s) => s.currentUserId)!
   const allTasks = useAppStore((s) => s.tasks)
   const assessments = useAppStore((s) => s.assessments)
   const tasks = allTasks.filter((t) => t.assigneeId === currentUserId)
-  const [filter, setFilter] = useState<FilterValue>('all')
+  const [filter, setFilter] = useState<TaskFilterValue>('all')
 
   const filtered = tasks.filter((t) => filter === 'all' || taskStatus(t) === filter)
   const sorted = [...filtered].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
@@ -75,18 +71,9 @@ export function EmployeeDashboard() {
         </div>
       )}
 
-      <Tabs value={filter} onValueChange={(v) => setFilter(v as FilterValue)} className="mb-6">
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <TabsList>
-            <TabsTrigger value="all">Все ({tasks.length})</TabsTrigger>
-            {(Object.keys(STATUS_LABELS) as TaskStatus[]).map((status) => (
-              <TabsTrigger key={status} value={status}>
-                {STATUS_LABELS[status]} ({tasks.filter((t) => taskStatus(t) === status).length})
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-      </Tabs>
+      <div className="mb-6">
+        <StatusFilterBar tasks={tasks} value={filter} onChange={setFilter} />
+      </div>
 
       {sorted.length === 0 ? (
         <EmptyState icon={Inbox} message="Нет задач в этой категории." />
