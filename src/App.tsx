@@ -9,6 +9,7 @@ import { EmployeeDetailPage } from '@/pages/EmployeeDetailPage'
 import { EmployeeDashboard } from '@/pages/EmployeeDashboard'
 import { TaskDetailPage } from '@/pages/TaskDetailPage'
 import { FilesPage } from '@/pages/FilesPage'
+import { FolderDetailPage } from '@/pages/FolderDetailPage'
 import { FileDetailPage } from '@/pages/FileDetailPage'
 import { supabase } from '@/lib/supabase'
 import { useAppStore } from '@/store/useAppStore'
@@ -48,6 +49,7 @@ function App() {
           <Route path="/employee" element={<EmployeeDashboard />} />
           <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
           <Route path="/files" element={<FilesPage />} />
+          <Route path="/files/f/:folderId" element={<FolderDetailPage />} />
           <Route path="/files/:fileId" element={<FileDetailPage />} />
           <Route path="*" element={<HomeRedirect />} />
         </Route>

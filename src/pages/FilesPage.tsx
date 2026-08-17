@@ -1,46 +1,22 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { format } from 'date-fns'
-import { ru } from 'date-fns/locale'
-import { Download, FileText, History, Lock } from 'lucide-react'
+import { Folder as FolderIcon } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { EmptyState } from '@/components/EmptyState'
 import { UploadFileDialog } from '@/components/UploadFileDialog'
-import { attachmentSignedUrl } from '@/lib/supabase'
-import { formatFileSize } from '@/lib/utils'
-import { currentVersion } from '@/lib/files'
-import { userLabel } from '@/lib/selectors'
-import type { ProjectFile } from '@/types'
+import { CreateFolderDialog } from '@/components/CreateFolderDialog'
+import { FileList } from '@/components/FileList'
 
 export function FilesPage() {
   const currentUserId = useAppStore((s) => s.currentUserId)!
   const users = useAppStore((s) => s.users)
   const tasks = useAppStore((s) => s.tasks)
   const files = useAppStore((s) => s.files)
+  const folders = useAppStore((s) => s.folders)
   const currentUser = users.find((u) => u.id === currentUserId)
   const isManager = currentUser?.role === 'manager'
   const teamMembers = users.filter((u) => u.id !== currentUserId)
-  const [downloadingId, setDownloadingId] = useState<string | null>(null)
 
-  const sorted = [...files].sort((a, b) => {
-    const aLatest = currentVersion(a).createdAt
-    const bLatest = currentVersion(b).createdAt
-    return bLatest.localeCompare(aLatest)
-  })
-
-  async function handleDownload(file: ProjectFile) {
-    setDownloadingId(file.id)
-    try {
-      const url = await attachmentSignedUrl(currentVersion(file).path)
-      window.open(url, '_blank')
-    } catch (error) {
-      console.error('file download failed', error)
-    } finally {
-      setDownloadingId(null)
-    }
-  }
+  const rootFiles = [...files.filter((f) => !f.folderId)].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  const sortedFolders = [...folders].sort((a, b) => a.name.localeCompare(b.name, 'ru'))
 
   return (
     <div>
@@ -49,53 +25,52 @@ export function FilesPage() {
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">Файлы</h1>
           <p className="mt-1 text-sm text-muted-foreground">Общая библиотека файлов проекта</p>
         </div>
-        <UploadFileDialog currentUserId={currentUserId} isManager={isManager} teamMembers={teamMembers} />
+        <div className="flex items-center gap-2">
+          {isManager && <CreateFolderDialog currentUserId={currentUserId} />}
+          <UploadFileDialog currentUserId={currentUserId} isManager={isManager} teamMembers={teamMembers} folders={folders} />
+        </div>
       </div>
 
-      {sorted.length === 0 ? (
-        <EmptyState icon={FileText} message="Пока нет ни одного файла." />
-      ) : (
-        <div className="space-y-2">
-          {sorted.map((file) => {
-            const version = currentVersion(file)
-            const task = file.taskId ? tasks.find((t) => t.id === file.taskId) : undefined
-            return (
-              <Card key={file.id} className="transition-colors duration-150 hover:bg-accent/40">
-                <CardContent className="flex flex-wrap items-center justify-between gap-3 py-3">
-                  <Link to={`/files/${file.id}`} className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      <span className="min-w-0 truncate text-sm font-medium">{file.name}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">{formatFileSize(version.size)}</span>
-                      {file.versions.length > 1 && (
-                        <span className="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground">
-                          <History className="h-3 w-3" /> v{file.versions.length}
-                        </span>
-                      )}
-                      {file.visibleTo.length > 0 && <Lock className="h-3 w-3 shrink-0 text-muted-foreground" />}
-                    </div>
-                    {file.note && <p className="mt-1 truncate text-sm text-muted-foreground">{file.note}</p>}
-                    <p className="mt-1 truncate text-xs text-muted-foreground">
-                      {userLabel(users, file.uploadedById)} · {format(new Date(version.createdAt), 'd MMM yyyy, HH:mm', { locale: ru })}
-                      {task && <> · {task.title}</>}
-                    </p>
-                  </Link>
-                  <div className="flex shrink-0 items-center gap-1.5">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDownload(file)}
-                      disabled={downloadingId === file.id}
-                    >
-                      <Download className="h-3.5 w-3.5" /> Скачать
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            )
-          })}
+      {sortedFolders.length > 0 && (
+        <div className="mb-6">
+          <h2 className="mb-2 text-xs font-medium text-muted-foreground">Папки</h2>
+          <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+            {sortedFolders.map((folder) => {
+              const count = files.filter((f) => f.folderId === folder.id).length
+              return (
+                <Link
+                  key={folder.id}
+                  to={`/files/f/${folder.id}`}
+                  className="group flex items-center gap-3 rounded-xl bg-card px-3.5 py-3 shadow-sm shadow-black/[0.02] ring-1 ring-foreground/10 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md hover:shadow-black/[0.06] dark:shadow-black/10"
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <FolderIcon className="h-4.5 w-4.5" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-medium">{folder.name}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {count} {count === 1 ? 'файл' : 'файлов'}
+                    </span>
+                  </span>
+                </Link>
+              )
+            })}
+          </div>
         </div>
       )}
+
+      <h2 className="mb-2 text-xs font-medium text-muted-foreground">
+        {sortedFolders.length > 0 ? 'Файлы вне папок' : 'Файлы'}
+      </h2>
+      <FileList
+        files={rootFiles}
+        users={users}
+        tasks={tasks}
+        folders={folders}
+        currentUserId={currentUserId}
+        isManager={isManager}
+        emptyMessage={sortedFolders.length > 0 ? 'Вне папок файлов нет.' : 'Пока нет ни одного файла.'}
+      />
     </div>
   )
 }

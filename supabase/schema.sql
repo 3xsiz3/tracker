@@ -47,6 +47,15 @@ create table public.assessments (
   autonomy int not null check (autonomy between 1 and 5)
 );
 
+-- Папки для группировки файлов (плоские, без вложенности). Создавать может только
+-- руководитель; удаление папки не удаляет файлы внутри — они просто становятся "без папки".
+create table public.folders (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  "createdById" uuid not null references public.profiles (id),
+  "createdAt" timestamptz not null default now()
+);
+
 -- Общая библиотека файлов проекта (вкладка «Файлы»). Заполняется как автоматически
 -- (вложения к комментариям задач), так и вручную — руководителем или сотрудником.
 -- "visibleTo" — пустой массив = видно всем; непустой = видно только перечисленным
@@ -59,6 +68,7 @@ create table public.files (
   note text not null default '',
   "uploadedById" uuid not null references public.profiles (id),
   "taskId" uuid references public.tasks (id) on delete set null,
+  "folderId" uuid references public.folders (id) on delete set null,
   "createdAt" timestamptz not null default now(),
   "visibleTo" jsonb not null default '[]'::jsonb,
   versions jsonb not null default '[]'::jsonb
@@ -85,6 +95,7 @@ alter table public.comments enable row level security;
 alter table public.assessments enable row level security;
 alter table public.files enable row level security;
 alter table public.file_comments enable row level security;
+alter table public.folders enable row level security;
 
 create policy "profiles_select_all" on public.profiles for select to authenticated using (true);
 create policy "profiles_update_own" on public.profiles for update to authenticated using (id = auth.uid());
@@ -163,6 +174,17 @@ create policy "file_comments_insert_own" on public.file_comments for insert to a
   );
 create policy "file_comments_delete_own" on public.file_comments for delete to authenticated
   using ("authorId" = auth.uid());
+
+create policy "folders_select_all" on public.folders for select to authenticated using (true);
+create policy "folders_insert_manager" on public.folders for insert to authenticated
+  with check (
+    "createdById" = auth.uid()
+    and exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'manager')
+  );
+create policy "folders_update_manager" on public.folders for update to authenticated
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'manager'));
+create policy "folders_delete_manager" on public.folders for delete to authenticated
+  using (exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'manager'));
 
 -- Хранилище файлов, прикладываемых к комментариям (Storage).
 -- Бакет приватный: файлы отдаются только по подписанной ссылке (createSignedUrl),

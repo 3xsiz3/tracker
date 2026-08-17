@@ -9,6 +9,7 @@ import type {
   DevelopmentTask,
   FileComment,
   FileVersion,
+  Folder,
   ProgressEntry,
   ProjectFile,
   QuestionType,
@@ -32,6 +33,7 @@ interface AppState {
   assessments: Assessment[]
   files: ProjectFile[]
   fileComments: FileComment[]
+  folders: Folder[]
   currentUserId: string | null
   loading: boolean
 
@@ -53,12 +55,23 @@ interface AppState {
   toggleChecklistItem: (taskId: string, itemId: string) => Promise<void>
   addComment: (taskId: string, authorId: string, text: string, files?: File[]) => Promise<void>
   deleteComment: (commentId: string) => Promise<void>
-  uploadFile: (input: { file: File; uploadedById: string; note: string; taskId?: string; visibleTo: string[] }) => Promise<void>
+  uploadFile: (input: {
+    file: File
+    uploadedById: string
+    note: string
+    taskId?: string
+    folderId?: string
+    visibleTo: string[]
+  }) => Promise<void>
   addFileVersion: (fileId: string, file: File, uploadedById: string) => Promise<void>
   deleteFile: (fileId: string) => Promise<void>
   setFileAccess: (fileId: string, visibleTo: string[]) => Promise<void>
+  moveFileToFolder: (fileId: string, folderId?: string) => Promise<void>
   addFileComment: (fileId: string, authorId: string, text: string, files?: File[]) => Promise<void>
   deleteFileComment: (commentId: string) => Promise<void>
+  createFolder: (name: string, createdById: string) => Promise<void>
+  renameFolder: (folderId: string, name: string) => Promise<void>
+  deleteFolder: (folderId: string) => Promise<void>
   submitAssessment: (taskId: string, assessedById: string, criteria: AssessmentCriteria) => Promise<void>
   confirmTask: (taskId: string, confirmedById: string) => Promise<void>
   deleteTask: (taskId: string) => Promise<void>
@@ -81,6 +94,7 @@ const emptyData = {
   assessments: [],
   files: [],
   fileComments: [],
+  folders: [],
   currentUserId: null,
   loading: false,
 }
@@ -92,6 +106,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
   assessments: [],
   files: [],
   fileComments: [],
+  folders: [],
   currentUserId: null,
   loading: false,
 
@@ -99,13 +114,14 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   loadAll: async () => {
     set({ loading: true })
-    const [profiles, tasks, comments, assessments, files, fileComments] = await Promise.all([
+    const [profiles, tasks, comments, assessments, files, fileComments, folders] = await Promise.all([
       supabase.from('profiles').select('*'),
       supabase.from('tasks').select('*'),
       supabase.from('comments').select('*'),
       supabase.from('assessments').select('*'),
       supabase.from('files').select('*'),
       supabase.from('file_comments').select('*'),
+      supabase.from('folders').select('*'),
     ])
     set({
       users: profiles.data ?? [],
@@ -114,6 +130,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       assessments: assessments.data ?? [],
       files: files.data ?? [],
       fileComments: fileComments.data ?? [],
+      folders: folders.data ?? [],
       loading: false,
     })
   },
@@ -296,7 +313,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
     if (error) console.error('answerVerificationQuestion failed', error)
   },
 
-  uploadFile: async ({ file, uploadedById, note, taskId, visibleTo }) => {
+  uploadFile: async ({ file, uploadedById, note, taskId, folderId, visibleTo }) => {
     const id = crypto.randomUUID()
     const path = `library/${id}/${safeStorageKey(file.name)}`
     const { error: uploadError } = await supabase.storage.from(ATTACHMENTS_BUCKET).upload(path, file)
@@ -311,6 +328,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
       note,
       uploadedById,
       taskId,
+      folderId,
       createdAt,
       visibleTo,
       versions: [{ fileName: file.name, path, size: file.size, type: file.type, uploadedById, createdAt }],
@@ -363,6 +381,12 @@ export const useAppStore = create<AppState>()((set, get) => ({
     if (error) console.error('setFileAccess failed', error)
   },
 
+  moveFileToFolder: async (fileId, folderId) => {
+    set((state) => ({ files: state.files.map((f) => (f.id === fileId ? { ...f, folderId } : f)) }))
+    const { error } = await supabase.from('files').update({ folderId: folderId ?? null }).eq('id', fileId)
+    if (error) console.error('moveFileToFolder failed', error)
+  },
+
   addFileComment: async (fileId, authorId, text, files) => {
     const id = crypto.randomUUID()
     const attachments: Attachment[] = []
@@ -385,5 +409,27 @@ export const useAppStore = create<AppState>()((set, get) => ({
     set((state) => ({ fileComments: state.fileComments.filter((c) => c.id !== commentId) }))
     const { error } = await supabase.from('file_comments').delete().eq('id', commentId)
     if (error) console.error('deleteFileComment failed', error)
+  },
+
+  createFolder: async (name, createdById) => {
+    const folder: Folder = { id: crypto.randomUUID(), name, createdById, createdAt: new Date().toISOString() }
+    set((state) => ({ folders: [...state.folders, folder] }))
+    const { error } = await supabase.from('folders').insert(folder)
+    if (error) console.error('createFolder failed', error)
+  },
+
+  renameFolder: async (folderId, name) => {
+    set((state) => ({ folders: state.folders.map((f) => (f.id === folderId ? { ...f, name } : f)) }))
+    const { error } = await supabase.from('folders').update({ name }).eq('id', folderId)
+    if (error) console.error('renameFolder failed', error)
+  },
+
+  deleteFolder: async (folderId) => {
+    set((state) => ({
+      folders: state.folders.filter((f) => f.id !== folderId),
+      files: state.files.map((f) => (f.folderId === folderId ? { ...f, folderId: undefined } : f)),
+    }))
+    const { error } = await supabase.from('folders').delete().eq('id', folderId)
+    if (error) console.error('deleteFolder failed', error)
   },
 }))

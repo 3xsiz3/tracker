@@ -10,7 +10,7 @@ export function AttachmentRow({ attachment }: { attachment: Attachment }) {
   async function handleDownload() {
     setDownloading(true)
     try {
-      const url = await attachmentSignedUrl(attachment.path)
+      const url = await attachmentSignedUrl(attachment.path, attachment.name)
       window.open(url, '_blank')
     } catch (error) {
       console.error('attachment download failed', error)

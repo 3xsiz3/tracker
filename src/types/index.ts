@@ -73,12 +73,20 @@ export interface FileVersion {
   note?: string
 }
 
+export interface Folder {
+  id: string
+  name: string
+  createdById: string
+  createdAt: string
+}
+
 export interface ProjectFile {
   id: string
   name: string
   note: string
   uploadedById: string
   taskId?: string
+  folderId?: string
   createdAt: string
   visibleTo: string[]
   versions: FileVersion[]

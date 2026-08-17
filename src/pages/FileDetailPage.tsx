@@ -2,18 +2,20 @@ import { useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { format } from 'date-fns'
 import { ru } from 'date-fns/locale'
-import { ArrowLeft, Download, FileText, History, Lock, Trash2 } from 'lucide-react'
+import { ArrowLeft, Download, FileText, Folder as FolderIcon, History, Lock, Trash2 } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { AddFileVersionDialog } from '@/components/AddFileVersionDialog'
 import { FileAccessDialog } from '@/components/FileAccessDialog'
 import { FileCommentThread } from '@/components/FileCommentThread'
 import { attachmentSignedUrl } from '@/lib/supabase'
 import { formatFileSize } from '@/lib/utils'
-import { currentVersion } from '@/lib/files'
+import { currentVersion, NO_FOLDER } from '@/lib/files'
 import { userLabel } from '@/lib/selectors'
+import type { FileVersion } from '@/types'
 
 export function FileDetailPage() {
   const { fileId } = useParams<{ fileId: string }>()
@@ -21,8 +23,10 @@ export function FileDetailPage() {
   const currentUserId = useAppStore((s) => s.currentUserId)!
   const users = useAppStore((s) => s.users)
   const tasks = useAppStore((s) => s.tasks)
+  const folders = useAppStore((s) => s.folders)
   const file = useAppStore((s) => s.files.find((f) => f.id === fileId))
   const deleteFile = useAppStore((s) => s.deleteFile)
+  const moveFileToFolder = useAppStore((s) => s.moveFileToFolder)
   const currentUser = users.find((u) => u.id === currentUserId)
   const isManager = currentUser?.role === 'manager'
   const teamMembers = users.filter((u) => u.id !== currentUserId)
@@ -37,10 +41,10 @@ export function FileDetailPage() {
   const task = file.taskId ? tasks.find((t) => t.id === file.taskId) : undefined
   const olderVersions = [...file.versions].slice(0, -1).reverse()
 
-  async function handleDownload(path: string) {
-    setDownloadingPath(path)
+  async function handleDownload(v: FileVersion) {
+    setDownloadingPath(v.path)
     try {
-      const url = await attachmentSignedUrl(path)
+      const url = await attachmentSignedUrl(v.path, v.fileName)
       window.open(url, '_blank')
     } catch (error) {
       console.error('file download failed', error)
@@ -111,6 +115,29 @@ export function FileDetailPage() {
         )}
       </p>
 
+      {canManage && (
+        <div className="mb-4 flex items-center gap-2 text-sm">
+          <FolderIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="text-muted-foreground">Папка:</span>
+          <Select
+            value={file.folderId ?? NO_FOLDER}
+            onValueChange={(v) => moveFileToFolder(file.id, v === NO_FOLDER ? undefined : v)}
+          >
+            <SelectTrigger size="sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={NO_FOLDER}>Без папки</SelectItem>
+              {folders.map((f) => (
+                <SelectItem key={f.id} value={f.id}>
+                  {f.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {file.note && (
         <Card className="mb-6">
           <CardContent className="py-4">
@@ -131,12 +158,7 @@ export function FileDetailPage() {
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDownload(version.path)}
-                disabled={downloadingPath === version.path}
-              >
+              <Button variant="outline" size="sm" onClick={() => handleDownload(version)} disabled={downloadingPath === version.path}>
                 <Download className="h-3.5 w-3.5" /> Скачать
               </Button>
               {isManager && <FileAccessDialog file={file} teamMembers={teamMembers} />}
@@ -160,7 +182,7 @@ export function FileDetailPage() {
                       variant="ghost"
                       size="sm"
                       className="h-6 shrink-0 text-xs"
-                      onClick={() => handleDownload(v.path)}
+                      onClick={() => handleDownload(v)}
                       disabled={downloadingPath === v.path}
                     >
                       <Download className="h-3 w-3" /> Скачать

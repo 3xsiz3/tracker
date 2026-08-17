@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Upload } from 'lucide-react'
 import { useAppStore } from '@/store/useAppStore'
-import type { User } from '@/types'
+import type { Folder, User } from '@/types'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -15,21 +15,28 @@ import {
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatFileSize } from '@/lib/utils'
+import { NO_FOLDER } from '@/lib/files'
 
 export function UploadFileDialog({
   currentUserId,
   isManager,
   teamMembers,
+  folders,
+  defaultFolderId,
 }: {
   currentUserId: string
   isManager: boolean
   teamMembers: User[]
+  folders: Folder[]
+  defaultFolderId?: string
 }) {
   const uploadFile = useAppStore((s) => s.uploadFile)
   const [open, setOpen] = useState(false)
   const [files, setFiles] = useState<File[]>([])
   const [note, setNote] = useState('')
+  const [folderId, setFolderId] = useState(defaultFolderId ?? NO_FOLDER)
   const [restricted, setRestricted] = useState(false)
   const [selected, setSelected] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
@@ -37,6 +44,7 @@ export function UploadFileDialog({
   function reset() {
     setFiles([])
     setNote('')
+    setFolderId(defaultFolderId ?? NO_FOLDER)
     setRestricted(false)
     setSelected([])
   }
@@ -50,8 +58,9 @@ export function UploadFileDialog({
     setUploading(true)
     try {
       const visibleTo = restricted ? selected : []
+      const targetFolderId = folderId === NO_FOLDER ? undefined : folderId
       for (const file of files) {
-        await uploadFile({ file, uploadedById: currentUserId, note: note.trim(), visibleTo })
+        await uploadFile({ file, uploadedById: currentUserId, note: note.trim(), folderId: targetFolderId, visibleTo })
       }
       reset()
       setOpen(false)
@@ -108,6 +117,25 @@ export function UploadFileDialog({
               </ul>
             )}
           </div>
+
+          {folders.length > 0 && (
+            <div className="grid gap-2">
+              <Label htmlFor="file-folder">Папка</Label>
+              <Select value={folderId} onValueChange={setFolderId}>
+                <SelectTrigger id="file-folder" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_FOLDER}>Без папки</SelectItem>
+                  {folders.map((f) => (
+                    <SelectItem key={f.id} value={f.id}>
+                      {f.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {isManager && (
             <div className="grid gap-2 border-t pt-4">
